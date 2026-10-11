@@ -9,4 +9,5 @@ public enum StorageKey {
     public static let scanlinesEnabled = "scanlinesEnabled"
     public static let hapticsEnabled = "hapticsEnabled"
     public static let highContrastEnabled = "highContrastEnabled"
+    public static let scanlineMotionEnabled = "scanlineMotionEnabled"
 }

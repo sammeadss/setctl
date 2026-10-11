@@ -15,6 +15,7 @@ struct SettingsView: View {
     @AppStorage(StorageKey.scanlinesEnabled) private var isScanLinesEnabled = true
     @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
     @AppStorage(StorageKey.highContrastEnabled) private var isHighContrastEnabled = false
+    @AppStorage(StorageKey.scanlineMotionEnabled) private var isScanlineMotionEnabled = false
 
     var body: some View {
         NavigationStack {
@@ -30,6 +31,8 @@ struct SettingsView: View {
                         unitsRow
 
                         scanlinesRow
+
+                        scanlineMotionRow
 
                         hapticsRow
 
@@ -69,6 +72,13 @@ struct SettingsView: View {
 
     private var scanlinesRow: some View {
         Toggle("SCANLINES", isOn: $isScanLinesEnabled)
+            .font(Typography.label)
+            .foregroundStyle(Palette.greenDim)
+            .tint(Palette.green)
+    }
+
+    private var scanlineMotionRow: some View {
+        Toggle("SCANLINE MOTION", isOn: $isScanlineMotionEnabled)
             .font(Typography.label)
             .foregroundStyle(Palette.greenDim)
             .tint(Palette.green)
