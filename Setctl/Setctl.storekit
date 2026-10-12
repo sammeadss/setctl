@@ -1,0 +1,59 @@
+//
+//  Setctl.storekit
+//  Setctl
+//
+//  Created by Samuel Meads on 10/11/26.
+//
+
+{
+  "identifier" : "A1B2C3D4",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "D4C3B2A1",
+      "localizations" : [
+
+      ],
+      "name" : "Setctl Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "E5F6A7B8",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Cross-device sync and cloud backup",
+              "displayName" : "Setctl Pro (Monthly)",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.stay.Setctl.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Setctl Pro (Monthly)",
+          "subscriptionGroupID" : "D4C3B2A1",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  }
+}

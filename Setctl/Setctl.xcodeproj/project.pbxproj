@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		93305849307C286F002C5C59 /* Setctl.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 93305848307C285C002C5C59 /* Setctl.storekit */; };
 		93DF0A0C2FEB205F00E59BD4 /* SetctlCore in Frameworks */ = {isa = PBXBuildFile; productRef = 93DF0A0B2FEB205F00E59BD4 /* SetctlCore */; };
 		93DF0A0E2FEB205F00E59BD4 /* SetctlData in Frameworks */ = {isa = PBXBuildFile; productRef = 93DF0A0D2FEB205F00E59BD4 /* SetctlData */; };
 		93DF0A102FEB205F00E59BD4 /* SetctlDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 93DF0A0F2FEB205F00E59BD4 /* SetctlDesignSystem */; };
@@ -31,6 +32,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		93305848307C285C002C5C59 /* Setctl.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Setctl.storekit; sourceTree = "<group>"; };
 		93BC12A22FE63B0000D0FB3F /* Setctl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Setctl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		93BC12AF2FE63B0100D0FB3F /* SetctlTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SetctlTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93BC12B92FE63B0100D0FB3F /* SetctlUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SetctlUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -100,6 +102,7 @@
 		93BC12992FE63B0000D0FB3F = {
 			isa = PBXGroup;
 			children = (
+				93305848307C285C002C5C59 /* Setctl.storekit */,
 				93DF0A132FEC1ABE00E59BD4 /* Modules */,
 				93BC12A42FE63B0000D0FB3F /* Setctl */,
 				93BC12B22FE63B0100D0FB3F /* SetctlTests */,
@@ -245,6 +248,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93305849307C286F002C5C59 /* Setctl.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
