@@ -8,6 +8,7 @@
 import Foundation
 import Observation
 import SetctlData
+import StoreKit
 import Supabase
 
 @MainActor
@@ -21,6 +22,7 @@ public final class AppModel {
     public private(set) var authState: AuthState = .guest
     public private(set) var profile: Profile
     public private(set) var isPro: Bool = false
+    public private(set) var proProduct: Product?
 
     public init(database: AppDatabase, supabaseClient: SupabaseClient) throws {
         exerciseRepository = ExerciseRepository(database: database)
@@ -41,11 +43,22 @@ public final class AppModel {
                 self.isPro = isPro
             }
         }
+
+        Task {
+            proProduct = try? await entitlementRepository.fetchProProduct()
+        }
     }
 
     public func setUnits(_ units: String) {
         profile.units = units
         profile.updatedAt = Date()
         try? profileRepository.save(profile)
+    }
+
+    public func purchasePro() async {
+        guard let proProduct else { return }
+        if await (try? entitlementRepository.purchase(proProduct)) == true {
+            isPro = true
+        }
     }
 }

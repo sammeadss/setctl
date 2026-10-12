@@ -38,6 +38,8 @@ struct SettingsView: View {
 
                         highContrastRow
 
+                        proSection
+
                         accountSection
                     }
                     .padding(Spacing.lg)
@@ -109,6 +111,21 @@ struct SettingsView: View {
             }
             .font(Typography.body)
             .foregroundStyle(Palette.greenDim)
+        }
+    }
+
+    @ViewBuilder
+    private var proSection: some View {
+        if appModel.isPro {
+            Text("SETCTL PRO: ACTIVE")
+                .font(Typography.label)
+                .foregroundStyle(Palette.greenDim)
+        } else if let product = appModel.proProduct {
+            Button("UPGRADE TO PRO \(product.displayPrice)/MO") {
+                Task { await appModel.purchasePro() }
+            }
+            .font(Typography.body)
+            .foregroundStyle(Palette.green)
         }
     }
 }
