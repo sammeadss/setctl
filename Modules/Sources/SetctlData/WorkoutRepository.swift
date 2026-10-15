@@ -48,6 +48,7 @@ public struct WorkoutRepository {
 
             let workoutExercises = try WorkoutExercise
                 .filter(Column("workoutId") == id)
+                .filter(Column("deletedAt") == nil)
                 .order(Column("position"))
                 .fetchAll(db)
 
@@ -55,6 +56,7 @@ public struct WorkoutRepository {
             for we in workoutExercises {
                 let sets = try SetEntry
                     .filter(Column("workoutExerciseId") == we.id)
+                    .filter(Column("deletedAt") == nil)
                     .order(Column("position"))
                     .fetchAll(db)
                 exercises.append(WorkoutExerciseWithSets(workoutExercise: we, sets: sets))
