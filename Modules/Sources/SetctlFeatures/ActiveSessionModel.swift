@@ -15,6 +15,8 @@ final class ActiveSessionModel {
     private let workoutRepository: WorkoutRepository
     private(set) var workout: Workout
     private(set) var exercises: [SessionExercise] = []
+    private var removedSets: [SetEntry] = []
+    private(set) var saveFailed = false
 
     init(workoutRepository: WorkoutRepository) {
         self.workoutRepository = workoutRepository
@@ -46,6 +48,7 @@ final class ActiveSessionModel {
             workoutExercise: workoutExercise,
             sets: []
         ))
+        autosave()
     }
 
     func addSet(to sessionExerciseId: String, reps: Int, weight: Double) {
@@ -65,39 +68,28 @@ final class ActiveSessionModel {
         )
 
         exercises[index].sets.append(set)
+        autosave()
     }
 
     func endSession() {
         let now = Date()
         workout.endedAt = now
         workout.updatedAt = now
-
-        let details = WorkoutDetails(
-            workout: workout,
-            exercises: exercises.map { sessionExercise in
-                WorkoutExerciseWithSets(
-                    workoutExercise: sessionExercise.workoutExercise,
-                    sets: sessionExercise.sets
-                )
-            }
-        )
-
-        do {
-            try workoutRepository.save(details)
-        } catch {
-            print("Failed to save workout: \(error)")
-        }
+        autosave()
     }
 
     func deleteSet(from sessionExerciseId: String, setId: String) {
         guard let index = exercises.firstIndex(where: { $0.id == sessionExerciseId }) else { return }
         guard let setIndex = exercises[index].sets.firstIndex(where: { $0.id == setId }) else { return }
 
-        exercises[index].sets.remove(at: setIndex)
+        let now = Date()
+        var removed = exercises[index].sets.remove(at: setIndex)
+        removed.deletedAt = now
+        removed.updatedAt = now
+        removedSets.append(removed)
 
-        for newPosition in exercises[index].sets.indices {
-            exercises[index].sets[newPosition].position = newPosition
-        }
+        renumberSets(at: index, now: now)
+        autosave()
     }
 
     func moveSets(in sessionExerciseId: String, from source: IndexSet, to destination: Int) {
@@ -105,9 +97,8 @@ final class ActiveSessionModel {
 
         exercises[index].sets.move(fromOffsets: source, toOffset: destination)
 
-        for newPosition in exercises[index].sets.indices {
-            exercises[index].sets[newPosition].position = newPosition
-        }
+        renumberSets(at: index, now: Date())
+        autosave()
     }
 
     var totalSets: Int {
@@ -121,6 +112,37 @@ final class ActiveSessionModel {
     var duration: TimeInterval {
         guard let endedAt = workout.endedAt else { return 0 }
         return endedAt.timeIntervalSince(workout.startedAt)
+    }
+
+    private func renumberSets(at index: Int, now: Date) {
+        for position in exercises[index].sets.indices {
+            guard exercises[index].sets[position].position != position else { continue }
+            exercises[index].sets[position].position = position
+            exercises[index].sets[position].updatedAt = now
+        }
+    }
+
+    private func autosave() {
+        do {
+            try workoutRepository.save(snapshot())
+            saveFailed = false
+        } catch {
+            saveFailed = true
+        }
+    }
+
+    private func snapshot() -> WorkoutDetails {
+        WorkoutDetails(
+            workout: workout,
+            exercises: exercises.map { sessionExercise in
+                WorkoutExerciseWithSets(
+                    workoutExercise: sessionExercise.workoutExercise,
+                    sets: sessionExercise.sets + removedSets.filter {
+                        $0.workoutExerciseId == sessionExercise.workoutExercise.id
+                    }
+                )
+            }
+        )
     }
 }
 
