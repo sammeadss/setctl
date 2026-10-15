@@ -60,7 +60,7 @@ public final class AppModel {
     }
 
     public func purchasePro() async {
-        guard let proProduct else { return }
+        guard case .signedIn = authState, let proProduct else { return }
         if await (try? entitlementRepository.purchase(proProduct)) == true {
             isPro = true
         }
