@@ -72,6 +72,7 @@ public struct WorkoutRepository {
                 .filter(Column("deletedAt") == nil)
                 .joining(required: WorkoutExercise.workout
                     .filter(Column("deletedAt") == nil)
+                    .filter(Column("endedAt") != nil)
                     .order(Column("startedAt").desc))
                 .fetchOne(db)
 
