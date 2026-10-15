@@ -5,6 +5,7 @@
 //  Created by Samuel Meads on 10/12/26.
 //
 
+import Foundation
 import StoreKit
 
 public struct EntitlementRepository: Sendable {
@@ -16,8 +17,8 @@ public struct EntitlementRepository: Sendable {
         try await Product.products(for: [Self.proMonthlyID]).first
     }
 
-    public func purchase(_ product: Product) async throws -> Bool {
-        let result = try await product.purchase()
+    public func purchase(_ product: Product, accountToken: UUID) async throws -> Bool {
+        let result = try await product.purchase(options: [.appAccountToken(accountToken)])
 
         switch result {
         case let .success(verification):
