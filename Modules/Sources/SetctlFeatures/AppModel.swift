@@ -19,15 +19,18 @@ public final class AppModel {
     public let authRepository: AuthRepository
     public let profileRepository: ProfileRepository
     public let entitlementRepository: EntitlementRepository
+    public let remoteProfileRepository: RemoteProfileRepository
     public private(set) var authState: AuthState = .guest
     public private(set) var profile: Profile
     public private(set) var isPro: Bool = false
+    public private(set) var serverIsPro: Bool = false
     public private(set) var proProduct: Product?
 
     public init(database: AppDatabase, supabaseClient: SupabaseClient) throws {
         exerciseRepository = ExerciseRepository(database: database)
         workoutRepository = WorkoutRepository(database: database)
         authRepository = AuthRepository(client: supabaseClient)
+        remoteProfileRepository = RemoteProfileRepository(client: supabaseClient)
         profileRepository = ProfileRepository(database: database)
         entitlementRepository = EntitlementRepository()
         profile = try profileRepository.fetchOrCreateProfile()
@@ -35,6 +38,7 @@ public final class AppModel {
         Task {
             for await state in authRepository.stateChanges {
                 authState = state
+                await refreshServerIsPro()
             }
         }
 
@@ -59,6 +63,16 @@ public final class AppModel {
         guard let proProduct else { return }
         if await (try? entitlementRepository.purchase(proProduct)) == true {
             isPro = true
+        }
+    }
+
+    private func refreshServerIsPro() async {
+        guard case let .signedIn(userId) = authState else {
+            serverIsPro = false
+            return
+        }
+        if let value = try? await remoteProfileRepository.fetchIsPro(userId: userId) {
+            serverIsPro = value
         }
     }
 }
