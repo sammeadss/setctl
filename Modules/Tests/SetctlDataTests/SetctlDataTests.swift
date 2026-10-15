@@ -168,6 +168,27 @@ import Testing
     #expect(lastSets.isEmpty)
 }
 
+@Test func fetchDetailsExcludesDeletedSets() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    let date = Date(timeIntervalSince1970: 1_000_000)
+
+    let exercise = Exercise(
+        name: "Row", primaryMuscle: "back",
+        isBodyweight: false, isCustom: false, ownerId: nil,
+        updatedAt: date, deletedAt: nil
+    )
+    try database.write { db in try exercise.save(db) }
+
+    var details = makeDetails(exercise: exercise, date: date, sets: [(5, 50), (5, 55)])
+    details.exercises[0].sets[0].deletedAt = date
+    try repository.save(details)
+
+    let fetched = try repository.fetchDetails(id: details.workout.id)
+
+    #expect(fetched?.exercises[0].sets.map(\.weight) == [55])
+}
+
 private func makeDetails(
     exercise: Exercise,
     date: Date,
