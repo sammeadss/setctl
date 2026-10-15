@@ -120,6 +120,10 @@ struct SettingsView: View {
             Text("SETCTL PRO: ACTIVE")
                 .font(Typography.label)
                 .foregroundStyle(Palette.greenDim)
+        } else if case .guest = appModel.authState {
+            Text("SIGN IN TO UPGRADE TO PRO")
+                .font(Typography.label)
+                .foregroundStyle(Palette.greenDim)
         } else if let product = appModel.proProduct {
             Button("UPGRADE TO PRO \(product.displayPrice)/MO") {
                 Task { await appModel.purchasePro() }
