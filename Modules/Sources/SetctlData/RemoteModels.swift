@@ -216,7 +216,7 @@ protocol SyncRecord: FetchableRecord, PersistableRecord {
 protocol SyncRow: Codable, Equatable, Sendable {
     associatedtype Local: SyncRecord
     static var remoteTable: String { get }
-    var serverUpdatedAt: Date? { get }
+    var serverUpdatedAt: Date? { get set }
     var local: Local { get }
     init(_ local: Local, userId: String)
 }

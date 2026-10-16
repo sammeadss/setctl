@@ -8,7 +8,7 @@
 import Foundation
 import GRDB
 
-public struct AppDatabase {
+public struct AppDatabase: Sendable {
     private let dbWriter: any DatabaseWriter
 
     init(_ dbWriter: some DatabaseWriter) throws {
