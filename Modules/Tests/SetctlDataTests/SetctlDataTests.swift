@@ -306,6 +306,37 @@ import Testing
     #expect(try repository.cursor(userId: "user-a", table: .workout).pushedUpTo == date)
 }
 
+@Test func remoteRowsRoundTripThroughLocalModels() {
+    let details = sampleDetails()
+    let userId = UUID().uuidString
+
+    let workout = RemoteWorkout(details.workout, userId: userId)
+    let workoutExercise = RemoteWorkoutExercise(details.exercises[0].workoutExercise, userId: userId)
+    let set = RemoteSetEntry(details.exercises[0].sets[0], userId: userId)
+
+    #expect(workout.id == details.workout.id.lowercased())
+    #expect(workout.userId == userId.lowercased())
+    #expect(workout.local == details.workout)
+    #expect(workoutExercise.local == details.exercises[0].workoutExercise)
+    #expect(set.local == details.exercises[0].sets[0])
+}
+
+@Test func remoteRowsEncodeMissingValuesAsExplicitNulls() throws {
+    let details = sampleDetails()
+    let userId = UUID().uuidString
+
+    let workoutData = try JSONEncoder().encode(RemoteWorkout(details.workout, userId: userId))
+    let setData = try JSONEncoder().encode(RemoteSetEntry(details.exercises[0].sets[0], userId: userId))
+    let workoutJSON = try #require(JSONSerialization.jsonObject(with: workoutData) as? [String: Any])
+    let setJSON = try #require(JSONSerialization.jsonObject(with: setData) as? [String: Any])
+
+    #expect(workoutJSON["ended_at"] is NSNull)
+    #expect(workoutJSON["note"] is NSNull)
+    #expect(workoutJSON["deleted_at"] is NSNull)
+    #expect(workoutJSON["server_updated_at"] == nil)
+    #expect(setJSON["rpe"] is NSNull)
+}
+
 private func makeDetails(
     exercise: Exercise,
     date: Date,
@@ -342,4 +373,14 @@ private func saveExercise(in database: AppDatabase) throws -> Exercise {
     )
     try database.write { db in try exercise.save(db) }
     return exercise
+}
+
+private func sampleDetails() -> WorkoutDetails {
+    let date = Date(timeIntervalSince1970: 1_000_000)
+    let exercise = Exercise(
+        name: "Row", primaryMuscle: "back",
+        isBodyweight: false, isCustom: false, ownerId: nil,
+        updatedAt: date, deletedAt: nil
+    )
+    return makeDetails(exercise: exercise, date: date, sets: [(5, 100)])
 }
