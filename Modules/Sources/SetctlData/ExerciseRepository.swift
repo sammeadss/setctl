@@ -23,4 +23,10 @@ public struct ExerciseRepository {
                 .fetchAll(db)
         }
     }
+
+    public func fetchExercise(id: String) throws -> Exercise? {
+        try database.read { db in
+            try Exercise.fetchOne(db, id: id)
+        }
+    }
 }
