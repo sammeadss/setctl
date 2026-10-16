@@ -12,6 +12,11 @@ extension Workout: SyncRecord {}
 extension WorkoutExercise: SyncRecord {}
 extension SetEntry: SyncRecord {}
 
+struct PushBatch<Row: SyncRow> {
+    var rows: [Row]
+    var highWaterMark: Date?
+}
+
 struct SyncStore {
     private let database: AppDatabase
 
@@ -29,6 +34,37 @@ struct SyncStore {
                 }
                 try incoming.save(db)
             }
+        }
+    }
+
+    func changedRows<Row: SyncRow>(
+        _: Row.Type,
+        since: Date?,
+        limit: Int,
+        userId: String
+    ) throws -> PushBatch<Row> {
+        try database.read { db in
+            var request = Row.Local.all()
+            if let since {
+                request = request.filter(Column("updatedAt") >= since)
+            }
+            var records = try request
+                .order(Column("updatedAt"), Column("id"))
+                .limit(limit)
+                .fetchAll(db)
+
+            if records.count == limit, let last = records.last {
+                let seen = Set(records.map(\.id))
+                let run = try Row.Local
+                    .filter(Column("updatedAt") == last.updatedAt)
+                    .fetchAll(db)
+                records += run.filter { !seen.contains($0.id) }
+            }
+
+            return PushBatch(
+                rows: records.map { Row($0, userId: userId) },
+                highWaterMark: records.last?.updatedAt
+            )
         }
     }
 }

@@ -101,3 +101,76 @@ private func noteAfterApplying(remoteUpdatedAt seconds: TimeInterval) throws -> 
     #expect(details.exercises.count == 1)
     #expect(details.exercises[0].sets.count == 1)
 }
+
+@Test func changedRowsStartAtTheCursorInclusively() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    _ = try saveWorkout(repository, updatedAt: 1_000_000)
+    let second = try saveWorkout(repository, updatedAt: 2_000_000)
+    let third = try saveWorkout(repository, updatedAt: 3_000_000)
+
+    let batch = try SyncStore(database: database).changedRows(
+        RemoteWorkout.self, since: Date(timeIntervalSince1970: 2_000_000), limit: 100, userId: userId
+    )
+
+    #expect(batch.rows.map(\.local.id) == [second.id, third.id])
+    #expect(batch.highWaterMark == Date(timeIntervalSince1970: 3_000_000))
+}
+
+@Test func changedRowsWithoutACursorReturnEverythingOldestFirst() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    let newer = try saveWorkout(repository, updatedAt: 3_000_000)
+    let older = try saveWorkout(repository, updatedAt: 1_000_000)
+
+    let batch = try SyncStore(database: database).changedRows(
+        RemoteWorkout.self, since: nil, limit: 100, userId: userId
+    )
+
+    #expect(batch.rows.map(\.local.id) == [older.id, newer.id])
+}
+
+@Test func changedRowsNeverSplitARunOfEqualTimestamps() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    let first = try saveWorkout(repository, updatedAt: 2_000_000)
+    let second = try saveWorkout(repository, updatedAt: 2_000_000)
+    let third = try saveWorkout(repository, updatedAt: 2_000_000)
+    _ = try saveWorkout(repository, updatedAt: 3_000_000)
+
+    let batch = try SyncStore(database: database).changedRows(
+        RemoteWorkout.self, since: nil, limit: 2, userId: userId
+    )
+
+    #expect(Set(batch.rows.map(\.local.id)) == Set([first.id, second.id, third.id]))
+    #expect(batch.highWaterMark == Date(timeIntervalSince1970: 2_000_000))
+}
+
+@Test func changedRowsIncludeTombstonesAndTheOwningUser() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    let stamp = Date(timeIntervalSince1970: 2_000_000)
+    _ = try saveWorkout(repository, updatedAt: 2_000_000, deletedAt: stamp)
+
+    let batch = try SyncStore(database: database).changedRows(
+        RemoteWorkout.self, since: nil, limit: 100, userId: userId.uppercased()
+    )
+
+    let row = try #require(batch.rows.first)
+    #expect(row.deletedAt == stamp)
+    #expect(row.userId == userId.lowercased())
+}
+
+private func saveWorkout(
+    _ repository: WorkoutRepository,
+    updatedAt seconds: TimeInterval,
+    deletedAt: Date? = nil
+) throws -> Workout {
+    let start = Date(timeIntervalSince1970: 1_000_000)
+    let workout = Workout(
+        startedAt: start, createdAt: start,
+        updatedAt: Date(timeIntervalSince1970: seconds), deletedAt: deletedAt
+    )
+    try repository.save(workout)
+    return workout
+}
