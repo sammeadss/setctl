@@ -43,7 +43,10 @@ let package = Package(
         // One test target per module
         .testTarget(name: "SetctlDesignSystemTests", dependencies: ["SetctlDesignSystem"]),
         .testTarget(name: "SetctlCoreTests", dependencies: ["SetctlCore"]),
-        .testTarget(name: "SetctlDataTests", dependencies: ["SetctlData"]),
+        .testTarget(
+            name: "SetctlDataTests",
+            dependencies: ["SetctlData", .product(name: "Supabase", package: "supabase-swift")]
+        ),
         .testTarget(name: "SetctlFeaturesTests", dependencies: ["SetctlFeatures"]),
     ]
 )
