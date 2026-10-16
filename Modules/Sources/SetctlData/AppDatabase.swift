@@ -161,6 +161,16 @@ public struct AppDatabase {
             }
         }
 
+        migrator.registerMigration("v3: sync state") { db in
+            try db.create(table: "syncState") { t in
+                t.column("userId", .text).notNull()
+                t.column("tableName", .text).notNull()
+                t.column("pushedUpTo", .datetime)
+                t.column("pulledUpTo", .datetime)
+                t.primaryKey(["userId", "tableName"])
+            }
+        }
+
         return migrator
     }
 
