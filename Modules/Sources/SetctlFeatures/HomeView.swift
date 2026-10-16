@@ -5,6 +5,7 @@
 //  Created by Samuel Meads on 7/23/26.
 //
 
+import SetctlData
 import SetctlDesignSystem
 import SwiftUI
 
@@ -12,6 +13,8 @@ public struct HomeView: View {
     @State private var isSessionActive = false
     @State private var isSettingsPresented = false
     @AppStorage(StorageKey.scanlinesEnabled) private var isScanlinesEnabled = true
+    @Environment(AppModel.self) private var appModel
+    @State private var hasUnfinishedWorkout = false
 
     public init() {}
 
@@ -20,7 +23,7 @@ public struct HomeView: View {
             ZStack {
                 Palette.black.ignoresSafeArea()
                 CornerFrame {
-                    Button("BEGIN") {
+                    Button(hasUnfinishedWorkout ? "RESUME" : "BEGIN") {
                         isSessionActive = true
                     }
                     .font(Typography.hero)
@@ -37,6 +40,9 @@ public struct HomeView: View {
                 .foregroundStyle(Palette.green)
                 .accessibilityLabel("Settings")
             }
+            .onAppear {
+                hasUnfinishedWorkout = (try? appModel.workoutRepository.resolveUnfinishedWorkout()) != nil
+            }
             .navigationDestination(isPresented: $isSessionActive) {
                 ActiveSessionView()
             }
@@ -49,4 +55,6 @@ public struct HomeView: View {
 
 #Preview {
     HomeView()
+        // swiftlint:disable:next force_try
+        .environment(try! AppModel(database: .empty(), supabaseClient: SupabaseConfig.makeClient()))
 }

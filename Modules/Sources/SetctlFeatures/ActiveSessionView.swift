@@ -112,7 +112,7 @@ struct ActiveSessionView: View {
         }
         .task {
             if model == nil {
-                model = ActiveSessionModel(workoutRepository: appModel.workoutRepository)
+                model = makeModel()
             }
         }
     }
@@ -120,5 +120,17 @@ struct ActiveSessionView: View {
     private func formattedElapsed(from startedAt: Date, to now: Date) -> String {
         Duration.seconds(now.timeIntervalSince(startedAt))
             .formatted(.time(pattern: .minuteSecond))
+    }
+
+    private func makeModel() -> ActiveSessionModel {
+        let workoutRepository = appModel.workoutRepository
+        let resumed = (try? workoutRepository.resolveUnfinishedWorkout()).flatMap { details in
+            try? ActiveSessionModel(
+                resuming: details,
+                workoutRepository: workoutRepository,
+                exerciseRepository: appModel.exerciseRepository
+            )
+        }
+        return resumed ?? ActiveSessionModel(workoutRepository: workoutRepository)
     }
 }
