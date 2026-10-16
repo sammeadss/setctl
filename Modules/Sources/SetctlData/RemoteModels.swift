@@ -218,6 +218,7 @@ protocol SyncRow: Codable, Equatable, Sendable {
     static var remoteTable: String { get }
     var serverUpdatedAt: Date? { get }
     var local: Local { get }
+    init(_ local: Local, userId: String)
 }
 
 extension RemoteWorkout: SyncRow {
