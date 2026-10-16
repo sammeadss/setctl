@@ -206,3 +206,20 @@ struct RemoteSetEntry: Codable, Equatable {
         try container.encode(deletedAt, forKey: .deletedAt)
     }
 }
+
+protocol SyncRow: Codable, Equatable, Sendable {
+    static var remoteTable: String { get }
+    var serverUpdatedAt: Date? { get }
+}
+
+extension RemoteWorkout: SyncRow {
+    static let remoteTable = "workouts"
+}
+
+extension RemoteWorkoutExercise: SyncRow {
+    static let remoteTable = "workout_exercises"
+}
+
+extension RemoteSetEntry: SyncRow {
+    static let remoteTable = "set_entries"
+}
