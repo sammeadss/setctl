@@ -31,6 +31,27 @@ final class ActiveSessionModel {
         )
     }
 
+    init(
+        resuming details: WorkoutDetails,
+        workoutRepository: WorkoutRepository,
+        exerciseRepository: ExerciseRepository
+    ) throws {
+        self.workoutRepository = workoutRepository
+        workout = details.workout
+        exercises = try details.exercises.map { item in
+            let exerciseId = item.workoutExercise.exerciseId
+            guard let exercise = try exerciseRepository.fetchExercise(id: exerciseId) else {
+                throw ResumeError.missingExercise
+            }
+            return SessionExercise(
+                exercise: exercise,
+                previousSets: (try? workoutRepository.fetchLastSets(for: exercise.id)) ?? [],
+                workoutExercise: item.workoutExercise,
+                sets: item.sets
+            )
+        }
+    }
+
     func addExercise(_ exercise: Exercise) {
         let workoutExercise = WorkoutExercise(
             workoutId: workout.id,
@@ -154,4 +175,8 @@ struct SessionExercise: Identifiable {
     var id: String {
         workoutExercise.id
     }
+}
+
+enum ResumeError: Error {
+    case missingExercise
 }

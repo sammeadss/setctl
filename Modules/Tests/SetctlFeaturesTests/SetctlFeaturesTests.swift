@@ -89,6 +89,25 @@ import Testing
     #expect(model.saveFailed)
 }
 
+@Test func resumedSessionRestoresExercisesAndSets() throws {
+    let (model, _) = try makeResumedSession()
+
+    #expect(model.exercises.count == 1)
+    #expect(model.exercises[0].exercise.name == "Bench Press")
+    #expect(model.exercises[0].sets.map(\.weight) == [100, 105])
+    #expect(model.exercises[0].previousSets.isEmpty)
+    #expect(model.workout.endedAt == nil)
+}
+
+@Test func resumedSessionKeepsSaving() throws {
+    let (model, database) = try makeResumedSession()
+
+    model.addSet(to: model.exercises[0].id, reps: 5, weight: 110)
+
+    let saved = try #require(try WorkoutRepository(database: database).fetchDetails(id: model.workout.id))
+    #expect(saved.exercises[0].sets.map(\.position) == [0, 1, 2])
+}
+
 private func makeSession() throws -> (model: ActiveSessionModel, database: AppDatabase) {
     let database = try AppDatabase.empty()
     let model = ActiveSessionModel(workoutRepository: WorkoutRepository(database: database))
@@ -101,4 +120,20 @@ private func makeSession() throws -> (model: ActiveSessionModel, database: AppDa
     try database.write { db in try exercise.save(db) }
     model.addExercise(exercise)
     return (model, database)
+}
+
+private func makeResumedSession() throws -> (model: ActiveSessionModel, database: AppDatabase) {
+    let (original, database) = try makeSession()
+    let sessionExerciseId = original.exercises[0].id
+    original.addSet(to: sessionExerciseId, reps: 5, weight: 100)
+    original.addSet(to: sessionExerciseId, reps: 5, weight: 105)
+
+    let repository = WorkoutRepository(database: database)
+    let details = try #require(try repository.fetchDetails(id: original.workout.id))
+    let resumed = try ActiveSessionModel(
+        resuming: details,
+        workoutRepository: repository,
+        exerciseRepository: ExerciseRepository(database: database)
+    )
+    return (resumed, database)
 }
