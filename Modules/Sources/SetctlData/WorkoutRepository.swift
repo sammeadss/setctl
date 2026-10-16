@@ -42,27 +42,64 @@ public struct WorkoutRepository {
 
     public func fetchDetails(id: String) throws -> WorkoutDetails? {
         try database.read { db in
-            guard let workout = try Workout.fetchOne(db, id: id) else {
-                return nil
-            }
+            try loadDetails(id: id, in: db)
+        }
+    }
 
-            let workoutExercises = try WorkoutExercise
-                .filter(Column("workoutId") == id)
+    private func loadDetails(id: String, in db: Database) throws -> WorkoutDetails? {
+        guard let workout = try Workout.fetchOne(db, id: id) else {
+            return nil
+        }
+
+        let workoutExercises = try WorkoutExercise
+            .filter(Column("workoutId") == id)
+            .filter(Column("deletedAt") == nil)
+            .order(Column("position"))
+            .fetchAll(db)
+
+        var exercises: [WorkoutExerciseWithSets] = []
+        for we in workoutExercises {
+            let sets = try SetEntry
+                .filter(Column("workoutExerciseId") == we.id)
                 .filter(Column("deletedAt") == nil)
                 .order(Column("position"))
                 .fetchAll(db)
+            exercises.append(WorkoutExerciseWithSets(workoutExercise: we, sets: sets))
+        }
 
-            var exercises: [WorkoutExerciseWithSets] = []
-            for we in workoutExercises {
-                let sets = try SetEntry
-                    .filter(Column("workoutExerciseId") == we.id)
-                    .filter(Column("deletedAt") == nil)
-                    .order(Column("position"))
-                    .fetchAll(db)
-                exercises.append(WorkoutExerciseWithSets(workoutExercise: we, sets: sets))
+        return WorkoutDetails(workout: workout, exercises: exercises)
+    }
+
+    public func resolveUnfinishedWorkout(
+        now: Date = Date(),
+        staleAfter: TimeInterval = 12 * 60 * 60
+    ) throws -> WorkoutDetails? {
+        try database.write { db in
+            let unfinished = try Workout
+                .filter(Column("endedAt") == nil)
+                .filter(Column("deletedAt") == nil)
+                .order(Column("startedAt").desc)
+                .fetchAll(db)
+
+            for var workout in unfinished {
+                guard let details = try loadDetails(id: workout.id, in: db) else { continue }
+
+                let setDates = details.exercises.flatMap(\.sets).map(\.createdAt)
+                let lastActivity = setDates.max() ?? workout.startedAt
+
+                if now.timeIntervalSince(lastActivity) <= staleAfter {
+                    return details
+                }
+
+                if setDates.isEmpty {
+                    workout.deletedAt = now
+                } else {
+                    workout.endedAt = lastActivity
+                }
+                workout.updatedAt = now
+                try workout.save(db)
             }
-
-            return WorkoutDetails(workout: workout, exercises: exercises)
+            return nil
         }
     }
 
