@@ -218,6 +218,63 @@ import Testing
     #expect(fetched?.exercises[0].sets.map(\.weight) == [55])
 }
 
+@Test func resolveUnfinishedReturnsRecentWorkout() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    let exercise = try saveExercise(in: database)
+    let date = Date(timeIntervalSince1970: 1_000_000)
+    let details = makeDetails(exercise: exercise, date: date, sets: [(5, 50)])
+    try repository.save(details)
+
+    let resolved = try repository.resolveUnfinishedWorkout(now: date.addingTimeInterval(3600))
+
+    #expect(resolved == details)
+}
+
+@Test func resolveUnfinishedFinishesStaleWorkoutAtItsLastSet() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    let exercise = try saveExercise(in: database)
+    let date = Date(timeIntervalSince1970: 1_000_000)
+    var details = makeDetails(exercise: exercise, date: date, sets: [(5, 50), (5, 55)])
+    let lastSetAt = date.addingTimeInterval(600)
+    details.exercises[0].sets[1].createdAt = lastSetAt
+    try repository.save(details)
+
+    let resolved = try repository.resolveUnfinishedWorkout(now: date.addingTimeInterval(13 * 3600))
+
+    #expect(resolved == nil)
+    let stored = try #require(try repository.fetchWorkout(id: details.workout.id))
+    #expect(stored.endedAt == lastSetAt)
+    #expect(try repository.fetchRecentWorkouts().map(\.id) == [details.workout.id])
+}
+
+@Test func resolveUnfinishedDiscardsStaleWorkoutWithoutSets() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    let exercise = try saveExercise(in: database)
+    let date = Date(timeIntervalSince1970: 1_000_000)
+    let details = makeDetails(exercise: exercise, date: date, sets: [])
+    try repository.save(details)
+
+    let resolved = try repository.resolveUnfinishedWorkout(now: date.addingTimeInterval(13 * 3600))
+
+    #expect(resolved == nil)
+    let stored = try #require(try repository.fetchWorkout(id: details.workout.id))
+    #expect(stored.deletedAt != nil)
+}
+
+@Test func resolveUnfinishedIgnoresFinishedWorkouts() throws {
+    let database = try AppDatabase.empty()
+    let repository = WorkoutRepository(database: database)
+    let exercise = try saveExercise(in: database)
+    let date = Date(timeIntervalSince1970: 1_000_000)
+    let details = makeDetails(exercise: exercise, date: date, endedAt: date.addingTimeInterval(1800), sets: [(5, 50)])
+    try repository.save(details)
+
+    #expect(try repository.resolveUnfinishedWorkout(now: date.addingTimeInterval(3600)) == nil)
+}
+
 private func makeDetails(
     exercise: Exercise,
     date: Date,
@@ -244,4 +301,14 @@ private func makeDetails(
         workout: workout,
         exercises: [WorkoutExerciseWithSets(workoutExercise: workoutExercise, sets: setEntries)]
     )
+}
+
+private func saveExercise(in database: AppDatabase) throws -> Exercise {
+    let exercise = Exercise(
+        name: "Row", primaryMuscle: "back",
+        isBodyweight: false, isCustom: false, ownerId: nil,
+        updatedAt: Date(timeIntervalSince1970: 1_000_000), deletedAt: nil
+    )
+    try database.write { db in try exercise.save(db) }
+    return exercise
 }
