@@ -275,6 +275,37 @@ import Testing
     #expect(try repository.resolveUnfinishedWorkout(now: date.addingTimeInterval(3600)) == nil)
 }
 
+@Test func syncCursorStartsEmpty() throws {
+    let repository = try SyncStateRepository(database: AppDatabase.empty())
+
+    let cursor = try repository.cursor(userId: "user-a", table: .workout)
+
+    #expect(cursor == SyncCursor(pushedUpTo: nil, pulledUpTo: nil))
+}
+
+@Test func savingOneCursorKeepsTheOther() throws {
+    let repository = try SyncStateRepository(database: AppDatabase.empty())
+    let pushed = Date(timeIntervalSince1970: 1_000_000)
+    let pulled = Date(timeIntervalSince1970: 2_000_000)
+
+    try repository.savePushedUpTo(pushed, userId: "user-a", table: .workout)
+    try repository.savePulledUpTo(pulled, userId: "user-a", table: .workout)
+
+    let cursor = try repository.cursor(userId: "user-a", table: .workout)
+    #expect(cursor == SyncCursor(pushedUpTo: pushed, pulledUpTo: pulled))
+}
+
+@Test func syncCursorsAreScopedPerUserAndTable() throws {
+    let repository = try SyncStateRepository(database: AppDatabase.empty())
+    let date = Date(timeIntervalSince1970: 1_000_000)
+
+    try repository.savePushedUpTo(date, userId: "user-a", table: .workout)
+
+    #expect(try repository.cursor(userId: "user-b", table: .workout).pushedUpTo == nil)
+    #expect(try repository.cursor(userId: "user-a", table: .setEntry).pushedUpTo == nil)
+    #expect(try repository.cursor(userId: "user-a", table: .workout).pushedUpTo == date)
+}
+
 private func makeDetails(
     exercise: Exercise,
     date: Date,
