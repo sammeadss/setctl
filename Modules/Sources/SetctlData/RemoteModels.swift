@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import GRDB
 
 struct RemoteWorkout: Codable, Equatable {
     var id: String
@@ -207,9 +208,16 @@ struct RemoteSetEntry: Codable, Equatable {
     }
 }
 
+protocol SyncRecord: FetchableRecord, PersistableRecord {
+    var id: String { get }
+    var updatedAt: Date { get }
+}
+
 protocol SyncRow: Codable, Equatable, Sendable {
+    associatedtype Local: SyncRecord
     static var remoteTable: String { get }
     var serverUpdatedAt: Date? { get }
+    var local: Local { get }
 }
 
 extension RemoteWorkout: SyncRow {
