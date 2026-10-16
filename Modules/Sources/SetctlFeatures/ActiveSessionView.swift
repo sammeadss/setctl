@@ -39,6 +39,13 @@ struct ActiveSessionView: View {
                             .scanlines(isEnabled: isScanlinesEnabled)
                     }
 
+                    if model.saveFailed {
+                        Text("SAVE FAILED. LAST CHANGE NOT STORED.")
+                            .font(Typography.label)
+                            .foregroundStyle(Palette.amber)
+                            .padding(.top, Spacing.xs)
+                    }
+
                     List {
                         ForEach(model.exercises) { item in
                             Section {
@@ -63,7 +70,9 @@ struct ActiveSessionView: View {
 
                             Button("END SESSION") {
                                 model.endSession()
-                                showingSummary = true
+                                if !model.saveFailed {
+                                    showingSummary = true
+                                }
                             }
                             .font(Typography.body)
                             .foregroundStyle(Palette.green)

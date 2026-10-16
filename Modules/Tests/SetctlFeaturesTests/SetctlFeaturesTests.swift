@@ -75,6 +75,20 @@ import Testing
     #expect(model.exercises[0].sets[0].updatedAt > stamps[1])
 }
 
+@Test func failedSaveSetsSaveFailed() throws {
+    let database = try AppDatabase.empty()
+    let model = ActiveSessionModel(workoutRepository: WorkoutRepository(database: database))
+    let unsaved = Exercise(
+        name: "Ghost", primaryMuscle: "chest",
+        isBodyweight: false, isCustom: false, ownerId: nil,
+        updatedAt: Date(), deletedAt: nil
+    )
+
+    model.addExercise(unsaved)
+
+    #expect(model.saveFailed)
+}
+
 private func makeSession() throws -> (model: ActiveSessionModel, database: AppDatabase) {
     let database = try AppDatabase.empty()
     let model = ActiveSessionModel(workoutRepository: WorkoutRepository(database: database))
