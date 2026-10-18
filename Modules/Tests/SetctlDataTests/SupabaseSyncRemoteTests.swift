@@ -136,11 +136,32 @@ struct SupabaseSyncRemoteTests {
         #expect(StubURLProtocol.requests.isEmpty)
     }
 
-    private func makeRemote() throws -> SupabaseSyncRemote {
+    @Test func serviceSyncsThroughTheRealClient() async throws {
+        StubURLProtocol.reset(body: "[]")
+        let database = try AppDatabase.empty()
+        let date = Date(timeIntervalSince1970: 1_000_000)
+        try WorkoutRepository(database: database).save(
+            Workout(startedAt: date, createdAt: date, updatedAt: date)
+        )
+        let service = try SyncService(database: database, client: makeClient())
+
+        let outcome = try await service.sync(userId: "7CD2758B-B159-47E0-B623-FD9D89440662")
+
+        #expect(outcome == .synced)
+        let calls = StubURLProtocol.requests.map { "\($0.httpMethod ?? "") \($0.url?.path ?? "")" }
+        #expect(Array(calls.prefix(3)) == [
+            "GET /rest/v1/workouts",
+            "GET /rest/v1/workout_exercises",
+            "GET /rest/v1/set_entries",
+        ])
+        #expect(calls.contains("POST /rest/v1/workouts"))
+    }
+
+    private func makeClient() throws -> SupabaseClient {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StubURLProtocol.self]
         let url = try #require(URL(string: "https://example.supabase.co"))
-        let client = SupabaseClient(
+        return SupabaseClient(
             supabaseURL: url,
             supabaseKey: "test-key",
             options: SupabaseClientOptions(
@@ -148,6 +169,9 @@ struct SupabaseSyncRemoteTests {
                 global: .init(session: URLSession(configuration: configuration))
             )
         )
-        return SupabaseSyncRemote(client: client)
+    }
+
+    private func makeRemote() throws -> SupabaseSyncRemote {
+        try SupabaseSyncRemote(client: makeClient())
     }
 }
