@@ -15,19 +15,61 @@ private enum FakeRemoteError: Error {
     case offline
 }
 
+private actor Gate {
+    private var isOpen = true
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func close() {
+        isOpen = false
+    }
+
+    func open() {
+        isOpen = true
+        for waiter in waiters {
+            waiter.resume()
+        }
+        waiters = []
+    }
+
+    func wait() async {
+        if isOpen {
+            return
+        }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+}
+
+private actor SleepRecorder {
+    private(set) var delays: [TimeInterval] = []
+
+    func record(_ seconds: TimeInterval) {
+        delays.append(seconds)
+    }
+}
+
 private final class FakeRemote: SyncRemote, @unchecked Sendable {
+    let gate = Gate()
     private let lock = NSLock()
     private var tables: [String: [Any]] = [:]
     private var clock = 0
-    private var offline = false
+    private var failuresRemaining = 0
     private var pushLog: [String] = []
+    private var pullCount = 0
 
     var pushedTables: [String] {
         lock.withLock { pushLog }
     }
 
+    var pullCalls: Int {
+        lock.withLock { pullCount }
+    }
+
     func setOffline(_ value: Bool) {
-        lock.withLock { offline = value }
+        lock.withLock { failuresRemaining = value ? Int.max : 0 }
+    }
+
+    func failNextPushes(_ count: Int) {
+        lock.withLock { failuresRemaining = count }
     }
 
     func seed(_ rows: [some SyncRow]) {
@@ -40,7 +82,8 @@ private final class FakeRemote: SyncRemote, @unchecked Sendable {
 
     func push<Row: SyncRow>(_ rows: [Row]) async throws {
         try lock.withLock {
-            if offline {
+            if failuresRemaining > 0 {
+                failuresRemaining -= 1
                 throw FakeRemoteError.offline
             }
             pushLog.append(Row.remoteTable)
@@ -49,7 +92,9 @@ private final class FakeRemote: SyncRemote, @unchecked Sendable {
     }
 
     func pull<Row: SyncRow>(_: Row.Type, since: Date, limit: Int) async throws -> [Row] {
-        lock.withLock {
+        lock.withLock { pullCount += 1 }
+        await gate.wait()
+        return lock.withLock {
             let rows = (tables[Row.remoteTable] as? [Row]) ?? []
             let newer = rows.filter { ($0.serverUpdatedAt ?? .distantPast) >= since }
             let ordered = newer.sorted {
@@ -78,8 +123,13 @@ private final class FakeRemote: SyncRemote, @unchecked Sendable {
     }
 }
 
-private func makeEngine(_ remote: FakeRemote, database: AppDatabase, pageSize: Int = 500) -> SyncEngine {
-    SyncEngine(remote: remote, database: database, pageSize: pageSize)
+private func makeEngine(
+    _ remote: FakeRemote,
+    database: AppDatabase,
+    pageSize: Int = 500,
+    sleep: @escaping SyncEngine.Sleep = { _ in }
+) -> SyncEngine {
+    SyncEngine(remote: remote, database: database, pageSize: pageSize, sleep: sleep)
 }
 
 private func saveWorkout(
@@ -217,4 +267,78 @@ private func saveWorkout(
     try await makeEngine(remote, database: database).sync(userId: userId)
 
     #expect(remote.pushedTables == ["workouts", "workout_exercises", "set_entries"])
+}
+
+@Test func syncForAnotherUserIsSkippedWhileARunIsInFlight() async throws {
+    let database = try AppDatabase.empty()
+    let remote = FakeRemote()
+    let engine = makeEngine(remote, database: database)
+    await remote.gate.close()
+
+    let running = Task { try await engine.sync(userId: userId) }
+    while remote.pullCalls == 0 {
+        await Task.yield()
+    }
+    let outcome = try await engine.sync(userId: "someone-else")
+    await remote.gate.open()
+    _ = try await running.value
+
+    #expect(outcome == .skipped)
+}
+
+@Test func concurrentSyncsForTheSameUserShareOneRun() async throws {
+    let database = try AppDatabase.empty()
+    let remote = FakeRemote()
+    let engine = makeEngine(remote, database: database)
+    await remote.gate.close()
+
+    let first = Task { try await engine.sync(userId: userId) }
+    while remote.pullCalls == 0 {
+        await Task.yield()
+    }
+    let second = Task { try await engine.sync(userId: userId) }
+    try await Task.sleep(for: .milliseconds(50))
+    await remote.gate.open()
+
+    #expect(try await first.value == .synced)
+    #expect(try await second.value == .synced)
+    #expect(remote.pullCalls == 3)
+}
+
+@Test func syncRetriesWithGrowingDelaysThenGivesUp() async throws {
+    let database = try AppDatabase.empty()
+    let remote = FakeRemote()
+    _ = try saveWorkout(database, note: "keep me", updatedAt: 2_000_000)
+    let sleeps = SleepRecorder()
+    let engine = makeEngine(remote, database: database) { await sleeps.record($0) }
+    remote.setOffline(true)
+
+    await #expect(throws: FakeRemoteError.self) {
+        try await engine.sync(userId: userId)
+    }
+
+    #expect(await sleeps.delays == [2, 4, 8])
+}
+
+@Test func syncSucceedsOnALaterAttempt() async throws {
+    let database = try AppDatabase.empty()
+    let remote = FakeRemote()
+    _ = try saveWorkout(database, note: "keep me", updatedAt: 2_000_000)
+    let sleeps = SleepRecorder()
+    let engine = makeEngine(remote, database: database) { await sleeps.record($0) }
+    remote.failNextPushes(2)
+
+    let outcome = try await engine.sync(userId: userId)
+
+    #expect(outcome == .synced)
+    #expect(await sleeps.delays == [2, 4])
+    #expect(remote.stored(RemoteWorkout.self).first?.note == "keep me")
+}
+
+@Test func retryDelaysDoubleAndAreCapped() {
+    let policy = RetryPolicy(maxAttempts: 10, baseDelay: 2, maxDelay: 30)
+
+    #expect(policy.delay(afterAttempt: 1) == 2)
+    #expect(policy.delay(afterAttempt: 3) == 8)
+    #expect(policy.delay(afterAttempt: 6) == 30)
 }
