@@ -29,6 +29,8 @@ struct SyncState: Codable, FetchableRecord, PersistableRecord {
 public struct SyncStateRepository {
     private let database: AppDatabase
 
+    private static let ownerKey = "owner"
+
     public init(database: AppDatabase) {
         self.database = database
     }
@@ -62,6 +64,20 @@ public struct SyncStateRepository {
                 ?? SyncState(userId: userId, tableName: table.rawValue)
             change(&state)
             try state.upsert(db)
+        }
+    }
+
+    public func claimOwner(_ userId: String) throws -> Bool {
+        let candidate = userId.uppercased()
+        return try database.write { db in
+            let existing = try SyncState
+                .filter(Column("tableName") == Self.ownerKey)
+                .fetchOne(db)
+            if let existing {
+                return existing.userId == candidate
+            }
+            try SyncState(userId: candidate, tableName: Self.ownerKey).insert(db)
+            return true
         }
     }
 }

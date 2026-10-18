@@ -342,3 +342,38 @@ private func saveWorkout(
     #expect(policy.delay(afterAttempt: 3) == 8)
     #expect(policy.delay(afterAttempt: 6) == 30)
 }
+
+@Test func firstSyncClaimsTheDeviceForThatAccount() async throws {
+    let database = try AppDatabase.empty()
+    let remote = FakeRemote()
+
+    try await makeEngine(remote, database: database).sync(userId: userId)
+
+    let cursors = SyncStateRepository(database: database)
+    #expect(try cursors.claimOwner(userId) == true)
+    #expect(try cursors.claimOwner("SOMEONE-ELSE") == false)
+}
+
+@Test func syncForAnotherAccountIsRefusedAndSendsNothing() async throws {
+    let database = try AppDatabase.empty()
+    let remote = FakeRemote()
+    _ = try saveWorkout(database, note: "mine", updatedAt: 2_000_000)
+    let sleeps = SleepRecorder()
+    let engine = makeEngine(remote, database: database) { await sleeps.record($0) }
+    try await engine.sync(userId: userId)
+    let pushesBefore = remote.pushedTables.count
+
+    await #expect(throws: SyncError.self) {
+        try await engine.sync(userId: "SOMEONE-ELSE")
+    }
+
+    #expect(remote.pushedTables.count == pushesBefore)
+    #expect(await sleeps.delays.isEmpty)
+}
+
+@Test func ownerCheckIgnoresLetterCase() throws {
+    let cursors = try SyncStateRepository(database: AppDatabase.empty())
+
+    #expect(try cursors.claimOwner("AbC-123") == true)
+    #expect(try cursors.claimOwner("abc-123") == true)
+}
