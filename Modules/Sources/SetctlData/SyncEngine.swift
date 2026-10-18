@@ -12,6 +12,10 @@ enum SyncOutcome {
     case skipped
 }
 
+public enum SyncError: Error {
+    case deviceBelongsToAnotherAccount
+}
+
 struct RetryPolicy: Sendable {
     var maxAttempts = 4
     var baseDelay: TimeInterval = 2
@@ -57,6 +61,10 @@ actor SyncEngine {
             guard running.userId == userId else { return .skipped }
             try await running.task.value
             return .synced
+        }
+
+        guard try cursors.claimOwner(userId) else {
+            throw SyncError.deviceBelongsToAnotherAccount
         }
 
         let task = Task { try await self.syncWithRetry(userId: userId) }
