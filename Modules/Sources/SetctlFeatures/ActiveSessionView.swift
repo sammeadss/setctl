@@ -72,6 +72,7 @@ struct ActiveSessionView: View {
                                 model.endSession()
                                 if !model.saveFailed {
                                     showingSummary = true
+                                    Task { await appModel.requestSync() }
                                 }
                             }
                             .font(Typography.body)

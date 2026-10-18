@@ -108,6 +108,26 @@ import Testing
     #expect(saved.exercises[0].sets.map(\.position) == [0, 1, 2])
 }
 
+@Test func successfulSyncBecomesSyncedWithTheTime() {
+    let now = Date(timeIntervalSince1970: 1_000_000)
+
+    #expect(SyncStatus.from(.success(.synced), now: now) == .synced(now))
+}
+
+@Test func skippedSyncBecomesIdle() {
+    #expect(SyncStatus.from(.success(.skipped)) == .idle)
+}
+
+@Test func refusedAccountBecomesWrongAccount() {
+    #expect(SyncStatus.from(.failure(SyncError.deviceBelongsToAnotherAccount)) == .wrongAccount)
+}
+
+@Test func anyOtherErrorBecomesFailed() {
+    struct Boom: Error {}
+
+    #expect(SyncStatus.from(.failure(Boom())) == .failed)
+}
+
 private func makeSession() throws -> (model: ActiveSessionModel, database: AppDatabase) {
     let database = try AppDatabase.empty()
     let model = ActiveSessionModel(workoutRepository: WorkoutRepository(database: database))

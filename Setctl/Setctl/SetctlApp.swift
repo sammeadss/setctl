@@ -17,6 +17,7 @@ struct SetctlApp: App {
     @State private var appModel: AppModel
     @State private var hasBooted = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         do {
@@ -45,6 +46,11 @@ struct SetctlApp: App {
                 }
                 .tint(Palette.green)
                 .environment(appModel)
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active {
+                        Task { await appModel.appDidBecomeActive() }
+                    }
+                }
             } else {
                 BootView {
                     hasBooted = true
