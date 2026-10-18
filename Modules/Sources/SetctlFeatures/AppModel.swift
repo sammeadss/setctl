@@ -20,11 +20,13 @@ public final class AppModel {
     public let profileRepository: ProfileRepository
     public let entitlementRepository: EntitlementRepository
     public let remoteProfileRepository: RemoteProfileRepository
+    private let syncService: SyncService
     public private(set) var authState: AuthState = .guest
     public private(set) var profile: Profile
     public private(set) var isPro: Bool = false
     public private(set) var serverIsPro: Bool = false
     public private(set) var proProduct: Product?
+    public private(set) var syncStatus: SyncStatus = .off
 
     public init(database: AppDatabase, supabaseClient: SupabaseClient) throws {
         exerciseRepository = ExerciseRepository(database: database)
@@ -34,6 +36,7 @@ public final class AppModel {
         profileRepository = ProfileRepository(database: database)
         entitlementRepository = EntitlementRepository()
         profile = try profileRepository.fetchOrCreateProfile()
+        syncService = SyncService(database: database, client: supabaseClient)
 
         Task {
             for await state in authRepository.stateChanges {
@@ -68,13 +71,34 @@ public final class AppModel {
         }
     }
 
+    public func requestSync() async {
+        guard case let .signedIn(userId) = authState, serverIsPro else {
+            syncStatus = .off
+            return
+        }
+        syncStatus = .syncing
+        let result: Result<SyncOutcome, any Error>
+        do {
+            result = try await .success(syncService.sync(userId: userId))
+        } catch {
+            result = .failure(error)
+        }
+        syncStatus = SyncStatus.from(result)
+    }
+
+    public func appDidBecomeActive() async {
+        await refreshServerIsPro()
+    }
+
     private func refreshServerIsPro() async {
         guard case let .signedIn(userId) = authState else {
             serverIsPro = false
+            syncStatus = .off
             return
         }
         if let value = try? await remoteProfileRepository.fetchIsPro(userId: userId) {
             serverIsPro = value
         }
+        Task { await requestSync() }
     }
 }
