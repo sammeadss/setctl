@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum SyncOutcome {
+public enum SyncOutcome: Sendable {
     case synced
     case skipped
 }
