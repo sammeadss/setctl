@@ -25,3 +25,35 @@ public enum SyncStatus: Equatable, Sendable {
         }
     }
 }
+
+extension SyncStatus {
+    var displayText: String? {
+        switch self {
+        case .off:
+            nil
+        case .idle:
+            "SYNC: READY"
+        case .syncing:
+            "SYNCING..."
+        case let .synced(date):
+            "SYNCED: " + date.formatted(date: .omitted, time: .shortened)
+        case .failed:
+            "SYNC FAILED. WILL RETRY."
+        case .wrongAccount:
+            "THIS DEVICE BELONGS TO ANOTHER ACCOUNT. SYNC IS OFF."
+        }
+    }
+
+    var isWarning: Bool {
+        self == .failed || self == .wrongAccount
+    }
+
+    var canSyncNow: Bool {
+        switch self {
+        case .idle, .synced, .failed:
+            true
+        case .off, .syncing, .wrongAccount:
+            false
+        }
+    }
+}

@@ -39,6 +39,8 @@ struct SettingsView: View {
                         highContrastRow
 
                         proSection
+                        
+                        syncSection
 
                         accountSection
                     }
@@ -130,6 +132,26 @@ struct SettingsView: View {
             }
             .font(Typography.body)
             .foregroundStyle(Palette.green)
+        }
+    }
+
+    @ViewBuilder
+    private var syncSection: some View {
+        if let text = appModel.syncStatus.displayText {
+            VStack(spacing: Spacing.xs) {
+                Text(text)
+                    .font(Typography.label)
+                    .foregroundStyle(appModel.syncStatus.isWarning ? Palette.amber : Palette.greenDim)
+                    .multilineTextAlignment(.center)
+
+                if appModel.syncStatus.canSyncNow {
+                    Button("SYNC NOW") {
+                        Task { await appModel.requestSync() }
+                    }
+                    .font(Typography.body)
+                    .foregroundStyle(Palette.green)
+                }
+            }
         }
     }
 }

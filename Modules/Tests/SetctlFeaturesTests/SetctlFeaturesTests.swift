@@ -128,6 +128,35 @@ import Testing
     #expect(SyncStatus.from(.failure(Boom())) == .failed)
 }
 
+@Test func syncStatusTextIsHiddenWhenSyncIsOff() {
+    #expect(SyncStatus.off.displayText == nil)
+}
+
+@Test func syncStatusTextNamesEachState() {
+    #expect(SyncStatus.idle.displayText == "SYNC: READY")
+    #expect(SyncStatus.syncing.displayText == "SYNCING...")
+    #expect(SyncStatus.failed.displayText == "SYNC FAILED. WILL RETRY.")
+    #expect(SyncStatus.wrongAccount.displayText?.contains("ANOTHER ACCOUNT") == true)
+    #expect(SyncStatus.synced(Date()).displayText?.hasPrefix("SYNCED: ") == true)
+}
+
+@Test func onlyProblemStatesAreWarnings() {
+    #expect(SyncStatus.failed.isWarning)
+    #expect(SyncStatus.wrongAccount.isWarning)
+    #expect(!SyncStatus.idle.isWarning)
+    #expect(!SyncStatus.syncing.isWarning)
+    #expect(!SyncStatus.synced(Date()).isWarning)
+}
+
+@Test func syncNowIsOfferedOnlyWhenItCanHelp() {
+    #expect(SyncStatus.idle.canSyncNow)
+    #expect(SyncStatus.synced(Date()).canSyncNow)
+    #expect(SyncStatus.failed.canSyncNow)
+    #expect(!SyncStatus.syncing.canSyncNow)
+    #expect(!SyncStatus.off.canSyncNow)
+    #expect(!SyncStatus.wrongAccount.canSyncNow)
+}
+
 private func makeSession() throws -> (model: ActiveSessionModel, database: AppDatabase) {
     let database = try AppDatabase.empty()
     let model = ActiveSessionModel(workoutRepository: WorkoutRepository(database: database))
