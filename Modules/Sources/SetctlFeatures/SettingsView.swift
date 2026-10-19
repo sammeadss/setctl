@@ -39,7 +39,7 @@ struct SettingsView: View {
                         highContrastRow
 
                         proSection
-                        
+
                         syncSection
 
                         accountSection
