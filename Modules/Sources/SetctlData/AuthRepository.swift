@@ -7,6 +7,7 @@
 
 import Supabase
 
+/// Email and password authentication through Supabase.
 public struct AuthRepository: Sendable {
     private let client: SupabaseClient
 
@@ -26,6 +27,7 @@ public struct AuthRepository: Sendable {
         try await client.auth.signOut()
     }
 
+    /// Emits the current auth state, then every change. An expired stored session counts as a guest.
     public var stateChanges: AsyncStream<AuthState> {
         AsyncStream { continuation in
             let task = Task {

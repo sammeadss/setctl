@@ -8,6 +8,7 @@
 import Foundation
 import StoreKit
 
+/// StoreKit 2 access to the Pro subscription.
 public struct EntitlementRepository: Sendable {
     public static let proMonthlyID = "com.stay.Setctl.pro.monthly"
 
@@ -17,6 +18,8 @@ public struct EntitlementRepository: Sendable {
         try await Product.products(for: [Self.proMonthlyID]).first
     }
 
+    /// Returns whether the purchase completed; a cancelled or pending purchase returns `false`. `accountToken` ties the
+    /// transaction to the Setctl account for server-side validation.
     public func purchase(_ product: Product, accountToken: UUID) async throws -> Bool {
         let result = try await product.purchase(options: [.appAccountToken(accountToken)])
 
@@ -32,6 +35,7 @@ public struct EntitlementRepository: Sendable {
         }
     }
 
+    /// Emits whether the user is entitled, once immediately and again after each transaction update.
     public var entitlementUpdates: AsyncStream<Bool> {
         AsyncStream { continuation in
             let task = Task {

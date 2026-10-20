@@ -7,6 +7,7 @@
 
 import Supabase
 
+/// Reads the signed-in user's server-side profile.
 public struct RemoteProfileRepository: Sendable {
     private let client: SupabaseClient
 
@@ -14,6 +15,7 @@ public struct RemoteProfileRepository: Sendable {
         self.client = client
     }
 
+    /// Whether the server marks the user as Pro. The app uses this for UI only; the server enforces the tier with RLS.
     public func fetchIsPro(userId: String) async throws -> Bool {
         let row: ProfileRow = try await client
             .from("profiles")
