@@ -8,6 +8,7 @@
 import Foundation
 import GRDB
 
+/// An exercise performed within a workout; `position` orders it in the session.
 public struct WorkoutExercise: Codable, Identifiable, Equatable, FetchableRecord, PersistableRecord {
     public var id: String = UUID().uuidString
     public var workoutId: String

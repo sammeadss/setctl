@@ -8,6 +8,7 @@
 import Foundation
 import GRDB
 
+/// The app's SQLite database. Creating one applies all pending migrations.
 public struct AppDatabase: Sendable {
     private let dbWriter: any DatabaseWriter
 
@@ -19,6 +20,8 @@ public struct AppDatabase: Sendable {
     private var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
         #if DEBUG
+            // Wipes the database when an already-registered migration is edited. Release
+            // builds must only ever add new migrations.
             migrator.eraseDatabaseOnSchemaChange = true
         #endif
 
@@ -73,6 +76,7 @@ public struct AppDatabase: Sendable {
         }
 
         migrator.registerMigration("v2: seed exercise catalog") { db in
+            // Fixed IDs and an epoch timestamp keep the catalog identical on every install.
             let seededAt = Date(timeIntervalSince1970: 0)
             let exercises = [
                 Exercise(
@@ -162,6 +166,7 @@ public struct AppDatabase: Sendable {
         }
 
         migrator.registerMigration("v3: sync state") { db in
+            // Per-account sync cursors.
             try db.create(table: "syncState") { t in
                 t.column("userId", .text).notNull()
                 t.column("tableName", .text).notNull()
@@ -182,12 +187,15 @@ public struct AppDatabase: Sendable {
         try dbWriter.read(value)
     }
 
+    /// An in-memory database for tests and previews.
     public static func empty() throws -> AppDatabase {
         try AppDatabase(DatabaseQueue())
     }
 
+    /// The on-disk database in Application Support, created on first use.
     public static func makeShared() throws -> AppDatabase {
         let fileManager = FileManager.default
+        // Application Support is backed up and never purged by the system.
         let appSupportURL = try fileManager.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,

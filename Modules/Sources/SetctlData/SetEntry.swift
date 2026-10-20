@@ -8,6 +8,7 @@
 import Foundation
 import GRDB
 
+/// A single logged set.
 public struct SetEntry: Codable, Identifiable, Equatable, FetchableRecord, PersistableRecord {
     public var id: String = UUID().uuidString
     public var workoutExerciseId: String
