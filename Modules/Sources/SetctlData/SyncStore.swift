@@ -19,6 +19,7 @@ struct PushBatch<Row: SyncRow> {
     var highWaterMark: Date?
 }
 
+/// The local-database side of sync: finds rows to push and applies pulled rows.
 struct SyncStore {
     private let database: AppDatabase
 

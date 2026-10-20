@@ -29,6 +29,7 @@ struct SyncState: Codable, FetchableRecord, PersistableRecord {
     var pulledUpTo: Date?
 }
 
+/// Persists the per-table sync cursors and the device's owning account.
 public struct SyncStateRepository {
     private let database: AppDatabase
 

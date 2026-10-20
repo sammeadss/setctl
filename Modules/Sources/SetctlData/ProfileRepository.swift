@@ -8,6 +8,7 @@
 import Foundation
 import GRDB
 
+/// The local profile (preferences).
 public struct ProfileRepository {
     private let database: AppDatabase
 
@@ -15,6 +16,7 @@ public struct ProfileRepository {
         self.database = database
     }
 
+    /// Returns the profile, creating it with kilogram units on first launch.
     public func fetchOrCreateProfile() throws -> Profile {
         try database.write { db in
             if let existing = try Profile.fetchOne(db) {
