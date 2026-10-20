@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Spacing scale in points, on a 4-point grid; use instead of literal padding values.
 public enum Spacing {
     public static let xxs: CGFloat = 4
     public static let xs: CGFloat = 8

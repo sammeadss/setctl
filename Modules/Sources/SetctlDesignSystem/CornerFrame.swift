@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Wraps content in box-drawing corners. The corners are decorative and hidden from VoiceOver.
 public struct CornerFrame<Content: View>: View {
     private let content: Content
 

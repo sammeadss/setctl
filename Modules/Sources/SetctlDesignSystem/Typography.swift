@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+/// The type scale. Everything is monospaced; `hero` and `title` use the bundled VT323 face and scale with Dynamic Type
+/// relative to the text style they name.
 public enum Typography {
     public static let hero = Font.custom("VT323-Regular", size: 56, relativeTo: .largeTitle)
     public static let title = Font.custom("VT323-Regular", size: 32, relativeTo: .title)
