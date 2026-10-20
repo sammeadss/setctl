@@ -12,6 +12,8 @@ extension Workout: SyncRecord {}
 extension WorkoutExercise: SyncRecord {}
 extension SetEntry: SyncRecord {}
 
+/// The result of a push query: the rows to send and the newest `updatedAt` among them, which becomes the push cursor
+/// once the server acknowledges the batch.
 struct PushBatch<Row: SyncRow> {
     var rows: [Row]
     var highWaterMark: Date?
@@ -24,6 +26,7 @@ struct SyncStore {
         self.database = database
     }
 
+    /// Applies pulled rows, keeping the local copy when it is as new or newer.
     func applyRemote<Row: SyncRow>(_ rows: [Row]) throws {
         try database.write { db in
             for row in rows {
@@ -37,6 +40,7 @@ struct SyncStore {
         }
     }
 
+    /// Local rows changed at or after `since`, oldest first.
     func changedRows<Row: SyncRow>(
         _: Row.Type,
         since: Date?,
@@ -46,6 +50,7 @@ struct SyncStore {
         try database.read { db in
             var request = Row.Local.all()
             if let since {
+                // Inclusive: the boundary row is resent, which is harmless because upserts are idempotent.
                 request = request.filter(Column("updatedAt") >= since)
             }
             var records = try request
@@ -54,6 +59,8 @@ struct SyncStore {
                 .fetchAll(db)
 
             if records.count == limit, let last = records.last {
+                // A full page can cut through rows sharing one `updatedAt`; take the rest of the run so the cursor
+                // never moves past an unsent row.
                 let seen = Set(records.map(\.id))
                 let run = try Row.Local
                     .filter(Column("updatedAt") == last.updatedAt)
