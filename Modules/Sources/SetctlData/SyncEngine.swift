@@ -9,13 +9,16 @@ import Foundation
 
 public enum SyncOutcome: Sendable {
     case synced
+    /// A sync for a different account was already running.
     case skipped
 }
 
+/// Thrown, and never retried, when the device was claimed by another account.
 public enum SyncError: Error {
     case deviceBelongsToAnotherAccount
 }
 
+/// Exponential backoff: `baseDelay` doubles on each attempt, capped at `maxDelay`.
 struct RetryPolicy: Sendable {
     var maxAttempts = 4
     var baseDelay: TimeInterval = 2
@@ -26,6 +29,7 @@ struct RetryPolicy: Sendable {
     }
 }
 
+/// Runs one sync at a time, pulling then pushing every table.
 actor SyncEngine {
     typealias Sleep = @Sendable (TimeInterval) async throws -> Void
 
@@ -57,6 +61,7 @@ actor SyncEngine {
 
     @discardableResult
     func sync(userId: String) async throws -> SyncOutcome {
+        // Single-flight: a repeat call for the same account joins the running sync.
         if let running = inFlight {
             guard running.userId == userId else { return .skipped }
             try await running.task.value
@@ -119,6 +124,8 @@ actor SyncEngine {
 
     private func pull(_ type: (some SyncRow).Type, table: SyncTable, userId: String) async throws {
         var cursor = try cursors.cursor(userId: userId, table: table).pulledUpTo
+        // Re-read a few seconds before the cursor: a row can commit after a later-stamped one, and re-applying a row is
+        // harmless.
         var since = cursor.map { $0.addingTimeInterval(-pullOverlap) } ?? Date(timeIntervalSince1970: 0)
 
         while true {
@@ -131,6 +138,8 @@ actor SyncEngine {
                 cursor = newest
             }
 
+            // A full page that does not move the cursor means more rows share one timestamp than fit in a page; stop
+            // instead of looping forever.
             guard page.count >= pageSize, newest > since else { return }
             since = newest
         }
@@ -144,6 +153,7 @@ actor SyncEngine {
             guard let mark = batch.highWaterMark else { return }
 
             try await remote.push(batch.rows)
+            // Only after the server accepts the batch, so a failed push is resent.
             try cursors.savePushedUpTo(mark, userId: userId, table: table)
 
             guard batch.rows.count >= pageSize, mark != cursor else { return }
