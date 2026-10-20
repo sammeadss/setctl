@@ -15,7 +15,7 @@ half4 bloom(float2 position, SwiftUI::Layer layer, float intensity) {
     if (intensity <= 0.0) {
         return color;
     }
-    
+
     half4 glow = half4(0.0);
     // Keep within `maxSampleOffset` in Bloom.swift.
     float radius = 3.0;
@@ -24,7 +24,5 @@ half4 bloom(float2 position, SwiftUI::Layer layer, float intensity) {
             glow = max(glow, layer.sample(position + float2(dx, dy)));
         }
     }
-    return color + glow * half(intensity);
-    
     return color + glow * half(intensity);
 }
