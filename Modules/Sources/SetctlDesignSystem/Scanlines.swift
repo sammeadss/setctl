@@ -8,6 +8,7 @@
 import SwiftUI
 
 public extension View {
+    /// Overlays CRT scanlines. The animation is opt-in in Settings and off under Reduce Motion.
     func scanlines(isEnabled: Bool) -> some View {
         modifier(ScanlinesModifier(isEnabled: isEnabled))
     }
@@ -29,6 +30,7 @@ private struct ScanlinesModifier: ViewModifier {
                 )
             }
         } else {
+            // Static pattern: no TimelineView, so nothing redraws every frame.
             content.colorEffect(
                 ShaderLibrary.bundle(.module).scanlines(.float(0)),
                 isEnabled: isEnabled

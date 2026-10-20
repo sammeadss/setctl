@@ -7,6 +7,7 @@
 
 import CoreHaptics
 
+/// Plays Core Haptics patterns. Does nothing on hardware without haptics.
 public final class HapticEngine {
     private var engine: CHHapticEngine?
 
@@ -19,6 +20,7 @@ public final class HapticEngine {
         do {
             let engine = try CHHapticEngine()
             engine.resetHandler = { [weak engine] in
+                // The system can reset the haptic server (e.g. after an audio interruption); restart it.
                 try? engine?.start()
             }
             try engine.start()
@@ -28,6 +30,7 @@ public final class HapticEngine {
         }
     }
 
+    /// Plays the flex-pump haptic: a single strong transient tap.
     public func playFlexPump() {
         guard let engine else { return }
         let event = CHHapticEvent(
