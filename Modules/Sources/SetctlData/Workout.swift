@@ -8,9 +8,14 @@
 import Foundation
 import GRDB
 
+/// A single training session.
+///
+/// Rows are soft-deleted: set `deletedAt` rather than removing the row, so sync can
+/// propagate the deletion. Bump `updatedAt` on every change, since it is the sync cursor.
 public struct Workout: Codable, Identifiable, Equatable, FetchableRecord, PersistableRecord {
     public var id: String = UUID().uuidString
     public var startedAt: Date
+    /// `nil` while the workout is in progress.
     public var endedAt: Date?
     public var note: String?
     public var createdAt: Date

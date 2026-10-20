@@ -8,6 +8,7 @@
 import Foundation
 import GRDB
 
+/// A catalog entry. Built-in exercises have no `ownerId`; custom ones carry their creator's.
 public struct Exercise: Codable, Identifiable, FetchableRecord, PersistableRecord {
     public var id: String = UUID().uuidString
     public var name: String
