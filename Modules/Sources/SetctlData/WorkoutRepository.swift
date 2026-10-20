@@ -9,6 +9,7 @@ import Foundation
 import GRDB
 import SetctlCore
 
+/// Reads and writes workouts together with their exercises and sets.
 public struct WorkoutRepository {
     private let database: AppDatabase
 
@@ -28,6 +29,7 @@ public struct WorkoutRepository {
         }
     }
 
+    /// Saves the workout, its exercises, and its sets in one transaction; failure never leaves half-saved workout.
     public func save(_ details: WorkoutDetails) throws {
         try database.write { db in
             try details.workout.save(db)
@@ -40,6 +42,7 @@ public struct WorkoutRepository {
         }
     }
 
+    /// Returns the workout even if it is soft-deleted; its exercises and sets exclude soft-deleted rows.
     public func fetchDetails(id: String) throws -> WorkoutDetails? {
         try database.read { db in
             try loadDetails(id: id, in: db)
@@ -70,6 +73,10 @@ public struct WorkoutRepository {
         return WorkoutDetails(workout: workout, exercises: exercises)
     }
 
+    /// Returns the unfinished workout to resume, if any.
+    ///
+    /// Unfinished workouts idle for longer than `staleAfter` are closed as a side effect; they are ended at their last
+    /// set or soft-deleted if they have none. Logged sets are never discarded.
     public func resolveUnfinishedWorkout(
         now: Date = Date(),
         staleAfter: TimeInterval = 12 * 60 * 60
@@ -94,6 +101,7 @@ public struct WorkoutRepository {
                 if setDates.isEmpty {
                     workout.deletedAt = now
                 } else {
+                    // End at the last set, not now, so idle time doesn't inflate the duration.
                     workout.endedAt = lastActivity
                 }
                 workout.updatedAt = now
@@ -124,8 +132,10 @@ public struct WorkoutRepository {
         }
     }
 
+    /// Finished workouts, newest first, with duration and total volume.
     public func fetchRecentWorkouts() throws -> [WorkoutSummary] {
         try database.read { db in
+            // N+1: two queries per workout. Replace with an aggregate before history grows.
             let workouts = try Workout
                 .filter(Column("deletedAt") == nil)
                 .filter(Column("endedAt") != nil)

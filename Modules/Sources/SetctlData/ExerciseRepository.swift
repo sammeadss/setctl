@@ -24,6 +24,7 @@ public struct ExerciseRepository {
         }
     }
 
+    /// Returns the exercise even if it is soft-deleted, so past workouts can still show its name.
     public func fetchExercise(id: String) throws -> Exercise? {
         try database.read { db in
             try Exercise.fetchOne(db, id: id)

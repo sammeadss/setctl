@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// One History row: a finished workout's headline numbers.
 public struct WorkoutSummary: Identifiable, Equatable {
     public var id: String
     public var startedAt: Date
