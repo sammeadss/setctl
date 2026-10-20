@@ -8,6 +8,8 @@
 import Foundation
 import GRDB
 
+/// Wire format of a `workouts` row. Keys are `snake_case`; IDs are lowercase on the wire and uppercase locally
+/// (Postgres vs Swift UUID text), converted at this boundary. `serverUpdatedAt` is set by the server and never sent.
 struct RemoteWorkout: Codable, Equatable {
     var id: String
     var userId: String
@@ -56,6 +58,8 @@ struct RemoteWorkout: Codable, Equatable {
     }
 
     func encode(to encoder: Encoder) throws {
+        // Explicit nulls: the synthesized encoder omits nil keys, and an omitted column would not clear its stored
+        // value on upsert.
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(userId, forKey: .userId)
@@ -68,6 +72,7 @@ struct RemoteWorkout: Codable, Equatable {
     }
 }
 
+/// Wire format of a `workout_exercises` row; see `RemoteWorkout`.
 struct RemoteWorkoutExercise: Codable, Equatable {
     var id: String
     var userId: String
@@ -123,6 +128,7 @@ struct RemoteWorkoutExercise: Codable, Equatable {
     }
 }
 
+/// Wire format of a `set_entries` row; see `RemoteWorkout`.
 struct RemoteSetEntry: Codable, Equatable {
     var id: String
     var userId: String
@@ -208,11 +214,13 @@ struct RemoteSetEntry: Codable, Equatable {
     }
 }
 
+/// A local record that sync can compare and apply by `id` and `updatedAt`.
 protocol SyncRecord: FetchableRecord, PersistableRecord {
     var id: String { get }
     var updatedAt: Date { get }
 }
 
+/// The wire form of a `SyncRecord`: converts to and from the local model.
 protocol SyncRow: Codable, Equatable, Sendable {
     associatedtype Local: SyncRecord
     static var remoteTable: String { get }
