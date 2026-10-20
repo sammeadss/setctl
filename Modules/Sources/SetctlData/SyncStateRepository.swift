@@ -8,12 +8,15 @@
 import Foundation
 import GRDB
 
+/// Synced tables, parents first; the engine pushes and pulls in this order because of server foreign keys.
 public enum SyncTable: String, CaseIterable, Sendable {
     case workout
     case workoutExercise
     case setEntry
 }
 
+/// Sync progress for one table. `pushedUpTo` is a local `updatedAt`; `pulledUpTo` is a server-assigned
+/// `server_updated_at`. They are different clocks and never compared.
 public struct SyncCursor: Equatable, Sendable {
     public var pushedUpTo: Date?
     public var pulledUpTo: Date?
@@ -29,6 +32,7 @@ struct SyncState: Codable, FetchableRecord, PersistableRecord {
 public struct SyncStateRepository {
     private let database: AppDatabase
 
+    /// The device owner is stored as a row with this sentinel table name.
     private static let ownerKey = "owner"
 
     public init(database: AppDatabase) {
@@ -42,6 +46,8 @@ public struct SyncStateRepository {
         }
     }
 
+    /// Advances the push cursor. Call only after the server acknowledges the batch, so a failure resends rather than
+    /// skips.
     public func savePushedUpTo(_ date: Date, userId: String, table: SyncTable) throws {
         try update(userId: userId, table: table) { $0.pushedUpTo = date }
     }
@@ -67,7 +73,9 @@ public struct SyncStateRepository {
         }
     }
 
+    /// Claims the device for `userId` if it is unclaimed; returns whether `userId` owns it.
     public func claimOwner(_ userId: String) throws -> Bool {
+        // Swift UUID strings are uppercase and Postgres returns lowercase.
         let candidate = userId.uppercased()
         return try database.write { db in
             let existing = try SyncState
