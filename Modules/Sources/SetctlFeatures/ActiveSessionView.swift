@@ -49,7 +49,7 @@ struct ActiveSessionView: View {
                     List {
                         ForEach(model.exercises) { item in
                             Section {
-                                SessionExerciseRow(item: item) { reps, weight in
+                                SessionExerciseRow(item: item, unit: appModel.weightUnit) { reps, weight in
                                     model.addSet(to: item.id, reps: reps, weight: weight)
                                 } onDeleteSet: { setId in
                                     model.deleteSet(from: item.id, setId: setId)
