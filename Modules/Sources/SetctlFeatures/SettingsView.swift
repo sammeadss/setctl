@@ -127,6 +127,7 @@ struct SettingsView: View {
                 .font(Typography.label)
                 .foregroundStyle(Palette.greenDim)
         } else if let product = appModel.proProduct {
+            // Nothing is offered until the StoreKit product has loaded.
             Button("UPGRADE TO PRO \(product.displayPrice)/MO") {
                 Task { await appModel.purchasePro() }
             }

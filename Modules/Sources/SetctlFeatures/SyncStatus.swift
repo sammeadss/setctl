@@ -8,6 +8,7 @@
 import Foundation
 import SetctlData
 
+/// What Settings shows about sync. `off` means sync does not apply: signed out, or not Pro.
 public enum SyncStatus: Equatable, Sendable {
     case off
     case idle
@@ -16,9 +17,11 @@ public enum SyncStatus: Equatable, Sendable {
     case failed
     case wrongAccount
 
+    /// Maps a sync result to a status. Only the device-ownership error is singled out; any other error is `failed`.
     static func from(_ result: Result<SyncOutcome, any Error>, now: Date = Date()) -> SyncStatus {
         switch result {
         case let .success(outcome):
+            // `skipped` means another account's sync was already running, so nothing was synced.
             outcome == .synced ? .synced(now) : .idle
         case let .failure(error):
             (error as? SyncError) == .deviceBelongsToAnotherAccount ? .wrongAccount : .failed
@@ -27,6 +30,7 @@ public enum SyncStatus: Equatable, Sendable {
 }
 
 extension SyncStatus {
+    /// Nil when sync is off, so nothing is shown.
     var displayText: String? {
         switch self {
         case .off:
