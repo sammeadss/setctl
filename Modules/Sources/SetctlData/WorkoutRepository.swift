@@ -164,4 +164,33 @@ public struct WorkoutRepository {
             }
         }
     }
+
+    /// Every set that has not been soft-deleted, flattened for export and ordered as performed. Includes unfinished
+    /// workouts. Weights are in kilograms, as stored.
+    public func fetchExportRows() throws -> [SetExportRow] {
+        try database.read { db in
+            let rows = try Row.fetchAll(db, sql: """
+            SELECT workout.startedAt, exercise.name, setEntry.position, setEntry.reps, setEntry.weight,
+                   setEntry.isWarmup
+            FROM setEntry
+            JOIN workoutExercise ON workoutExercise.id = setEntry.workoutExerciseId
+            JOIN workout ON workout.id = workoutExercise.workoutId
+            JOIN exercise ON exercise.id = workoutExercise.exerciseId
+            WHERE setEntry.deletedAt IS NULL
+              AND workoutExercise.deletedAt IS NULL
+              AND workout.deletedAt IS NULL
+            ORDER BY workout.startedAt, workoutExercise.position, setEntry.position
+            """)
+            return rows.map { row in
+                SetExportRow(
+                    workoutDate: row["startedAt"],
+                    exercise: row["name"],
+                    setNumber: (row["position"] as Int) + 1,
+                    reps: row["reps"],
+                    weightKilograms: row["weight"],
+                    isWarmup: row["isWarmup"]
+                )
+            }
+        }
+    }
 }
