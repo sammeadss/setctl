@@ -8,6 +8,8 @@
 import SetctlDesignSystem
 import SwiftUI
 
+/// The launch animation: an ASCII figure that resolves out of noise. Tapping skips it; `onFinished` is called when it
+/// ends or is skipped.
 public struct BootView: View {
     @State private var bootStart = Date()
     @State private var isSkipped = false
@@ -45,6 +47,8 @@ public struct BootView: View {
         }
     }
 
+    /// Phases in order: noise, reveal of the first figure frame, the transition frames, a hold on the last one, then a
+    /// morph into the resolve frame.
     private func currentFrame(at elapsed: TimeInterval) -> String {
         switch elapsed {
         case ..<scrambleDuration:
@@ -67,13 +71,16 @@ public struct BootView: View {
     }
 
     private func runSequence() async {
+        // Under Reduce Motion there is no animation to wait for.
         guard !reduceMotion else {
             finish()
             return
         }
 
+        // The bloom and haptic fire when the transition reaches `bloomTriggerFrameIndex`.
         let bloomDelay = scrambleDuration + revealDuration + Double(bloomTriggerFrameIndex) * frameInterval
         try? await Task.sleep(for: .seconds(bloomDelay))
+        // A tap while waiting has already finished the boot.
         guard !isSkipped else { return }
         if isHapticsEnabled {
             hapticEngine.playFlexPump()
@@ -133,6 +140,7 @@ public struct BootView: View {
         morphEndTime + resolveHoldDuration
     }
 
+    /// A missing resource yields no frames rather than a crash; every phase tolerates an empty list.
     private static func loadTransitionFrames() -> [String] {
         guard
             let url = Bundle.module.url(forResource: "frames", withExtension: "json"),
@@ -158,6 +166,8 @@ public struct BootView: View {
             .joined(separator: "\n")
     }
 
+    /// One random threshold per character cell, so reveals and morphs uncover cells in a fixed order instead of
+    /// re-randomizing every tick.
     private let cellThresholds = BootView.makeCellThresholds(count: 90 * 115) // matches figureColumns × figureRows
 
     private static func makeCellThresholds(count: Int) -> [Double] {
