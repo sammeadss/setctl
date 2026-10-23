@@ -89,4 +89,12 @@ public struct SyncStateRepository {
             return true
         }
     }
+
+    /// Releases the device claim and clears the cursors of `userId`, for when that account is deleted. Another
+    /// account's claim is left alone.
+    public func clear(forUser userId: String) throws {
+        try database.write { db in
+            _ = try SyncState.filter(Column("userId") == userId.uppercased()).deleteAll(db)
+        }
+    }
 }
