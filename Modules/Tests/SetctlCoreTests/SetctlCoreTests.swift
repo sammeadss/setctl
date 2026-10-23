@@ -1,3 +1,4 @@
+import Foundation
 @testable import SetctlCore
 import Testing
 
@@ -27,4 +28,34 @@ import Testing
 @Test func formatsWeightInTheChosenUnit() {
     #expect(WeightUnit.kg.format(kilograms: 100) == "100.0kg")
     #expect(WeightUnit.lb.format(kilograms: 100) == "220.5lb")
+}
+
+@Test func csvHasAHeaderAndOneLinePerSet() {
+    let csv = CSVExport.make(from: [sampleRow()], unit: .kg)
+    #expect(csv == "date,exercise,set,reps,weight,unit,warmup\n1970-01-01T00:00:00Z,Squat,1,5,100.00,kg,false\n")
+}
+
+@Test func csvOfNoSetsIsJustTheHeader() {
+    #expect(CSVExport.make(from: [], unit: .kg) == "date,exercise,set,reps,weight,unit,warmup\n")
+}
+
+@Test func csvConvertsWeightToTheChosenUnit() {
+    let csv = CSVExport.make(from: [sampleRow()], unit: .lb)
+    #expect(csv.contains(",220.46,lb,"))
+}
+
+@Test func csvQuotesFieldsWithCommasAndQuotes() {
+    let csv = CSVExport.make(from: [sampleRow(exercise: "Press, \"strict\"")], unit: .kg)
+    #expect(csv.contains("\"Press, \"\"strict\"\"\""))
+}
+
+private func sampleRow(exercise: String = "Squat", kilograms: Double = 100) -> SetExportRow {
+    SetExportRow(
+        workoutDate: Date(timeIntervalSince1970: 0),
+        exercise: exercise,
+        setNumber: 1,
+        reps: 5,
+        weightKilograms: kilograms,
+        isWarmup: false
+    )
 }
