@@ -10,12 +10,15 @@ import Observation
 import SetctlCore
 import SetctlData
 
+/// The workout being logged. Every change is autosaved as a whole, so a crash loses at most the change in flight.
 @Observable
 final class ActiveSessionModel {
     private let workoutRepository: WorkoutRepository
     private(set) var workout: Workout
     private(set) var exercises: [SessionExercise] = []
+    /// Soft-deleted sets, kept out of `exercises` but still saved so their deletions sync.
     private var removedSets: [SetEntry] = []
+    /// True when the last autosave failed; the next successful save clears it.
     private(set) var saveFailed = false
 
     init(workoutRepository: WorkoutRepository) {
@@ -31,6 +34,8 @@ final class ActiveSessionModel {
         )
     }
 
+    /// Rebuilds a session from an unfinished workout. Throws `ResumeError.missingExercise` if a logged exercise is no
+    /// longer in the catalog.
     init(
         resuming details: WorkoutDetails,
         workoutRepository: WorkoutRepository,
@@ -81,6 +86,7 @@ final class ActiveSessionModel {
             position: exercises[index].sets.count,
             reps: reps,
             weight: weight,
+            // The units setting is not applied to logging yet; sets are always stored as kg.
             weightUnit: "kg",
             isWarmup: false,
             isCompleted: true,
@@ -92,6 +98,7 @@ final class ActiveSessionModel {
         autosave()
     }
 
+    /// Marks the workout ended and saves it. Check `saveFailed` afterward.
     func endSession() {
         let now = Date()
         workout.endedAt = now
@@ -130,11 +137,14 @@ final class ActiveSessionModel {
         WorkoutMath.totalVolume(of: exercises.flatMap(\.sets).map { (reps: $0.reps, weight: $0.weight) })
     }
 
+    /// Zero until the workout has ended.
     var duration: TimeInterval {
         guard let endedAt = workout.endedAt else { return 0 }
         return endedAt.timeIntervalSince(workout.startedAt)
     }
 
+    /// Keeps `position` contiguous. Only rows whose position changed get a new `updatedAt`, so unmoved sets are not
+    /// re-pushed by sync.
     private func renumberSets(at index: Int, now: Date) {
         for position in exercises[index].sets.indices {
             guard exercises[index].sets[position].position != position else { continue }
@@ -172,6 +182,7 @@ struct SessionExercise: Identifiable {
     let previousSets: [SetEntry]
     var workoutExercise: WorkoutExercise
     var sets: [SetEntry]
+    /// The workout-exercise id, not the catalog exercise's, so it identifies this entry within the workout.
     var id: String {
         workoutExercise.id
     }
