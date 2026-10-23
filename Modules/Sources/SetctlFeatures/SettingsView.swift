@@ -8,6 +8,7 @@
 import SetctlCore
 import SetctlData
 import SetctlDesignSystem
+import StoreKit
 import SwiftUI
 
 struct SettingsView: View {
@@ -19,6 +20,13 @@ struct SettingsView: View {
     @AppStorage(StorageKey.scanlineMotionEnabled) private var isScanlineMotionEnabled = false
     @State private var exportFile: ExportFile?
     @State private var exportFailed = false
+    @State private var deletion = Deletion.idle
+    @State private var isConfirmingDelete = false
+    @State private var isManagingSubscription = false
+
+    private enum Deletion {
+        case idle, deleting, failed, deleted
+    }
 
     var body: some View {
         NavigationStack {
@@ -59,6 +67,9 @@ struct SettingsView: View {
                     .foregroundStyle(Palette.green)
             }
         }
+        #if os(iOS)
+        .manageSubscriptionsSheet(isPresented: $isManagingSubscription)
+        #endif
     }
 
     private var unitsRow: some View {
@@ -114,22 +125,85 @@ struct SettingsView: View {
     private var accountSection: some View {
         switch appModel.authState {
         case .guest:
+            if deletion == .deleted {
+                Text("ACCOUNT DELETED. WORKOUTS ON THIS DEVICE ARE UNCHANGED.")
+                    .font(Typography.label)
+                    .foregroundStyle(Palette.greenDim)
+                    .multilineTextAlignment(.center)
+            }
             AuthView()
         case .signedIn:
+            signedInAccount
+        }
+    }
+
+    private var signedInAccount: some View {
+        VStack(spacing: Spacing.md) {
             Button("SIGN OUT") {
                 Task { try? await appModel.authRepository.signOut() }
             }
             .font(Typography.body)
             .foregroundStyle(Palette.greenDim)
+
+            Button("DELETE ACCOUNT") {
+                isConfirmingDelete = true
+            }
+            .font(Typography.body)
+            .foregroundStyle(Palette.red)
+            .disabled(deletion == .deleting)
+
+            if deletion == .deleting {
+                Text("DELETING...")
+                    .font(Typography.label)
+                    .foregroundStyle(Palette.greenDim)
+            } else if deletion == .failed {
+                Text("DELETE FAILED. NOTHING WAS CHANGED.")
+                    .font(Typography.label)
+                    .foregroundStyle(Palette.amber)
+            }
+        }
+        .onAppear { deletion = .idle }
+        .confirmationDialog("Delete your account?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
+            Button("Delete account", role: .destructive) {
+                Task { await deleteAccount() }
+            }
+        } message: {
+            Text(deleteMessage)
+        }
+    }
+
+    private var deleteMessage: String {
+        let base = "This permanently deletes your account and synced workouts from our servers. "
+            + "Workouts on this device stay."
+        guard appModel.isPro else { return base }
+        return base + " Your subscription is not cancelled; use MANAGE SUBSCRIPTION to cancel it."
+    }
+
+    private func deleteAccount() async {
+        deletion = .deleting
+        do {
+            try await appModel.deleteAccount()
+            deletion = .deleted
+        } catch {
+            deletion = .failed
         }
     }
 
     @ViewBuilder
     private var proSection: some View {
         if appModel.isPro {
-            Text("SETCTL PRO: ACTIVE")
-                .font(Typography.label)
-                .foregroundStyle(Palette.greenDim)
+            VStack(spacing: Spacing.xs) {
+                Text("SETCTL PRO: ACTIVE")
+                    .font(Typography.label)
+                    .foregroundStyle(Palette.greenDim)
+                #if os(iOS)
+                    Button("MANAGE SUBSCRIPTION") {
+                        isManagingSubscription = true
+                    }
+                    .font(Typography.label)
+                    .foregroundStyle(Palette.green)
+                #endif
+            }
         } else if case .guest = appModel.authState {
             Text("SIGN IN TO UPGRADE TO PRO")
                 .font(Typography.label)
