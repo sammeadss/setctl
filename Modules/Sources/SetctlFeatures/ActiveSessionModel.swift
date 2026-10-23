@@ -86,7 +86,7 @@ final class ActiveSessionModel {
             position: exercises[index].sets.count,
             reps: reps,
             weight: weight,
-            // The units setting is not applied to logging yet; sets are always stored as kg.
+            // Always kilograms; the views convert to and from the display unit.
             weightUnit: "kg",
             isWarmup: false,
             isCompleted: true,

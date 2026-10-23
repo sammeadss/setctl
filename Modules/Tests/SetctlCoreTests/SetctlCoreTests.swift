@@ -23,3 +23,8 @@ import Testing
     let kilograms = WeightUnit.lb.toKilograms(225)
     #expect(abs(WeightUnit.lb.fromKilograms(kilograms) - 225) < 1e-9)
 }
+
+@Test func formatsWeightInTheChosenUnit() {
+    #expect(WeightUnit.kg.format(kilograms: 100) == "100.0kg")
+    #expect(WeightUnit.lb.format(kilograms: 100) == "220.5lb")
+}

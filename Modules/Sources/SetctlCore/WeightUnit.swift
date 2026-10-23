@@ -5,6 +5,8 @@
 //  Created by Samuel Meads on 10/23/26.
 //
 
+import Foundation
+
 /// Unit weights are shown and entered in. Weights are always stored in kilograms; views convert at the edge.
 public enum WeightUnit: String, CaseIterable, Sendable {
     case kg
@@ -30,5 +32,10 @@ public enum WeightUnit: String, CaseIterable, Sendable {
         case .lb:
             value / Self.poundsPerKilogram
         }
+    }
+
+    /// Formats a stored weight in kilograms for display in this unit.
+    public func format(kilograms: Double) -> String {
+        String(format: "%.1f", fromKilograms(kilograms)) + rawValue
     }
 }

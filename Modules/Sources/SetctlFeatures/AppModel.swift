@@ -7,6 +7,7 @@
 
 import Foundation
 import Observation
+import SetctlCore
 import SetctlData
 import StoreKit
 import Supabase
@@ -59,6 +60,11 @@ public final class AppModel {
         Task {
             proProduct = try? await entitlementRepository.fetchProProduct()
         }
+    }
+
+    /// The unit weights are shown and entered in. Falls back to kilograms for an unrecognized stored value.
+    public var weightUnit: WeightUnit {
+        WeightUnit(rawValue: profile.units) ?? .kg
     }
 
     public func setUnits(_ units: String) {
