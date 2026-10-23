@@ -9,3 +9,17 @@ import Testing
 @Test func totalVolumeOfNoSetsIsZero() {
     #expect(WorkoutMath.totalVolume(of: []) == 0)
 }
+
+@Test func kilogramsAreUnchangedInKilograms() {
+    #expect(WeightUnit.kg.fromKilograms(100) == 100)
+    #expect(WeightUnit.kg.toKilograms(100) == 100)
+}
+
+@Test func convertsKilogramsToPounds() {
+    #expect(abs(WeightUnit.lb.fromKilograms(100) - 220.462) < 0.001)
+}
+
+@Test func poundsRoundTripThroughKilograms() {
+    let kilograms = WeightUnit.lb.toKilograms(225)
+    #expect(abs(WeightUnit.lb.fromKilograms(kilograms) - 225) < 1e-9)
+}
