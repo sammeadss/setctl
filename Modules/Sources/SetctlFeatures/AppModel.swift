@@ -67,6 +67,10 @@ public final class AppModel {
         WeightUnit(rawValue: profile.units) ?? .kg
     }
 
+    public func exportCSV() throws -> String {
+        try CSVExport.make(from: workoutRepository.fetchExportRows(), unit: weightUnit)
+    }
+
     public func setUnits(_ units: WeightUnit) {
         profile.units = units.rawValue
         profile.updatedAt = Date()

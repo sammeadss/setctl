@@ -17,6 +17,8 @@ struct SettingsView: View {
     @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
     @AppStorage(StorageKey.highContrastEnabled) private var isHighContrastEnabled = false
     @AppStorage(StorageKey.scanlineMotionEnabled) private var isScanlineMotionEnabled = false
+    @State private var exportFile: ExportFile?
+    @State private var exportFailed = false
 
     var body: some View {
         NavigationStack {
@@ -43,10 +45,14 @@ struct SettingsView: View {
 
                         syncSection
 
+                        exportSection
+
                         accountSection
                     }
                     .padding(Spacing.lg)
                 }
+                // Rebuilt when the unit changes, because the CSV carries converted weights.
+                .task(id: appModel.weightUnit) { prepareExport() }
             }
             .toolbar {
                 Button("DONE") { dismiss() }
@@ -155,6 +161,31 @@ struct SettingsView: View {
                     .foregroundStyle(Palette.green)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var exportSection: some View {
+        if let exportFile {
+            ShareLink(item: exportFile, preview: SharePreview("Setctl export")) {
+                Text("EXPORT DATA")
+            }
+            .font(Typography.body)
+            .foregroundStyle(Palette.green)
+        } else if exportFailed {
+            Text("EXPORT UNAVAILABLE")
+                .font(Typography.label)
+                .foregroundStyle(Palette.amber)
+        }
+    }
+
+    private func prepareExport() {
+        do {
+            exportFile = try ExportFile(csv: appModel.exportCSV())
+            exportFailed = false
+        } catch {
+            exportFile = nil
+            exportFailed = true
         }
     }
 }
