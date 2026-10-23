@@ -24,6 +24,7 @@ public final class AppModel {
     public let entitlementRepository: EntitlementRepository
     public let remoteProfileRepository: RemoteProfileRepository
     private let syncService: SyncService
+    private let syncStateRepository: SyncStateRepository
     public private(set) var authState: AuthState = .guest
     public private(set) var profile: Profile
     /// Pro according to StoreKit on this device.
@@ -42,6 +43,7 @@ public final class AppModel {
         entitlementRepository = EntitlementRepository()
         profile = try profileRepository.fetchOrCreateProfile()
         syncService = SyncService(database: database, client: supabaseClient)
+        syncStateRepository = SyncStateRepository(database: database)
 
         // Listeners for auth and entitlement changes, alive as long as the app.
         Task {
@@ -102,6 +104,19 @@ public final class AppModel {
             result = .failure(error)
         }
         syncStatus = SyncStatus.from(result)
+    }
+
+    /// Permanently deletes the account on the server, then forgets it on this device. Workouts stay on the device.
+    ///
+    /// - Throws: If the server delete fails; nothing local has changed in that case.
+    public func deleteAccount() async throws {
+        guard case let .signedIn(userId) = authState else { return }
+        try await authRepository.deleteAccount()
+        // Stops new syncs for the deleted account before its device claim is released.
+        authState = .guest
+        // The account is gone, so nothing below may report failure.
+        try? syncStateRepository.clear(forUser: userId)
+        try? await authRepository.signOut()
     }
 
     /// Refreshes the server's Pro flag, which then triggers a sync.
