@@ -52,6 +52,7 @@ public struct WorkoutDetailView: View {
         .task {
             do {
                 details = try appModel.workoutRepository.fetchDetails(id: workoutId)
+                // A workout stores only exercise ids, so names come from the catalog.
                 let exercises = try appModel.exerciseRepository.fetchAllExercises()
                 exerciseNames = Dictionary(uniqueKeysWithValues: exercises.map { ($0.id, $0.name) })
             } catch {

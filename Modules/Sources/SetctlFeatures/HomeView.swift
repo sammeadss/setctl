@@ -41,6 +41,8 @@ public struct HomeView: View {
                 .accessibilityLabel("Settings")
             }
             .onAppear {
+                // Re-checked on every appearance so RESUME shows after a session. This also closes stale unfinished
+                // workouts as a side effect.
                 hasUnfinishedWorkout = (try? appModel.workoutRepository.resolveUnfinishedWorkout()) != nil
             }
             .navigationDestination(isPresented: $isSessionActive) {
