@@ -11,6 +11,8 @@ import SetctlData
 import StoreKit
 import Supabase
 
+/// App-wide state shared through the environment: repositories, auth, Pro status, and sync status. Also decides when to
+/// sync.
 @MainActor
 @Observable
 public final class AppModel {
@@ -23,7 +25,9 @@ public final class AppModel {
     private let syncService: SyncService
     public private(set) var authState: AuthState = .guest
     public private(set) var profile: Profile
+    /// Pro according to StoreKit on this device.
     public private(set) var isPro: Bool = false
+    /// Pro according to the server profile. Sync runs only when this is true.
     public private(set) var serverIsPro: Bool = false
     public private(set) var proProduct: Product?
     public private(set) var syncStatus: SyncStatus = .off
@@ -38,6 +42,7 @@ public final class AppModel {
         profile = try profileRepository.fetchOrCreateProfile()
         syncService = SyncService(database: database, client: supabaseClient)
 
+        // Listeners for auth and entitlement changes, alive as long as the app.
         Task {
             for await state in authRepository.stateChanges {
                 authState = state
@@ -66,11 +71,14 @@ public final class AppModel {
         guard case let .signedIn(userId) = authState,
               let accountToken = UUID(uuidString: userId),
               let proProduct else { return }
+        // Tags the purchase with the user's id so a receipt can be tied to the account.
         if await (try? entitlementRepository.purchase(proProduct, accountToken: accountToken)) == true {
             isPro = true
         }
     }
 
+    /// Syncs now when signed in with a Pro account, otherwise sets the status to off. Failures are reported through
+    /// `syncStatus`, not thrown.
     public func requestSync() async {
         guard case let .signedIn(userId) = authState, serverIsPro else {
             syncStatus = .off
@@ -86,6 +94,7 @@ public final class AppModel {
         syncStatus = SyncStatus.from(result)
     }
 
+    /// Refreshes the server's Pro flag, which then triggers a sync.
     public func appDidBecomeActive() async {
         await refreshServerIsPro()
     }
@@ -96,6 +105,7 @@ public final class AppModel {
             syncStatus = .off
             return
         }
+        // Keep the last known value if the fetch fails, such as when offline.
         if let value = try? await remoteProfileRepository.fetchIsPro(userId: userId) {
             serverIsPro = value
         }

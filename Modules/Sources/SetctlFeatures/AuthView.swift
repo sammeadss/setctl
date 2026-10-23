@@ -99,6 +99,7 @@ public struct AuthView: View {
         }
     }
 
+    /// Signs in, and if that fails tries to sign up, so one form serves both. A failure shows the sign-up error.
     private func submit() async {
         errorMessage = nil
         do {
