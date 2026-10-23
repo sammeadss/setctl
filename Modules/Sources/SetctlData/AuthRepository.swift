@@ -27,6 +27,14 @@ public struct AuthRepository: Sendable {
         try await client.auth.signOut()
     }
 
+    /// Deletes the signed-in account and its server data through the `delete-account` Edge Function. Does not sign out;
+    /// the caller does that once the deletion has succeeded.
+    ///
+    /// - Throws: `FunctionsError` if the server refuses or cannot be reached.
+    public func deleteAccount() async throws {
+        try await client.functions.invoke("delete-account", options: FunctionInvokeOptions(method: .post))
+    }
+
     /// Emits the current auth state, then every change. An expired stored session counts as a guest.
     public var stateChanges: AsyncStream<AuthState> {
         AsyncStream { continuation in
