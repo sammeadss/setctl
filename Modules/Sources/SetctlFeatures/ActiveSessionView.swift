@@ -102,7 +102,8 @@ struct ActiveSessionView: View {
                     SessionSummaryView(
                         duration: model.duration,
                         totalSets: model.totalSets,
-                        totalVolume: model.totalVolume
+                        totalVolume: model.totalVolume,
+                        unit: appModel.weightUnit
                     )
                 }
                 .onChange(of: showingSummary) { wasShowingSummary, isShowingSummary in

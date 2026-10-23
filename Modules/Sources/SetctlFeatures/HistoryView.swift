@@ -28,7 +28,7 @@ public struct HistoryView: View {
                                 .font(Typography.body)
                                 .foregroundStyle(Palette.green)
 
-                            Text("\(formattedDuration(summary.duration)) \(summary.totalVolume, specifier: "%.1f")kg")
+                            Text(detailText(for: summary))
                                 .font(Typography.label)
                                 .foregroundStyle(Palette.greenDim)
                         }
@@ -53,5 +53,10 @@ public struct HistoryView: View {
 
     private func formattedDuration(_ duration: TimeInterval) -> String {
         Duration.seconds(duration).formatted(.time(pattern: .minuteSecond))
+    }
+
+    private func detailText(for summary: WorkoutSummary) -> String {
+        let volume = appModel.weightUnit.format(kilograms: summary.totalVolume)
+        return "\(formattedDuration(summary.duration)) \(volume)"
     }
 }

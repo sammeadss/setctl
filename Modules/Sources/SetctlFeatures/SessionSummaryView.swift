@@ -5,6 +5,7 @@
 //  Created by Samuel Meads on 8/5/26.
 //
 
+import SetctlCore
 import SetctlDesignSystem
 import SwiftUI
 
@@ -12,6 +13,7 @@ struct SessionSummaryView: View {
     let duration: TimeInterval
     let totalSets: Int
     let totalVolume: Double
+    let unit: WeightUnit
 
     var body: some View {
         ZStack {
@@ -30,7 +32,7 @@ struct SessionSummaryView: View {
                     .font(Typography.body)
                     .foregroundStyle(Palette.greenDim)
 
-                Text("\(totalVolume, specifier: "%.1f")kg total")
+                Text("\(unit.format(kilograms: totalVolume)) total")
                     .font(Typography.body)
                     .foregroundStyle(Palette.greenDim)
             }
