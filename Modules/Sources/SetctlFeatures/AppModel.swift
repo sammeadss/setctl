@@ -67,8 +67,8 @@ public final class AppModel {
         WeightUnit(rawValue: profile.units) ?? .kg
     }
 
-    public func setUnits(_ units: String) {
-        profile.units = units
+    public func setUnits(_ units: WeightUnit) {
+        profile.units = units.rawValue
         profile.updatedAt = Date()
         try? profileRepository.save(profile)
     }

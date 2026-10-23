@@ -5,6 +5,7 @@
 //  Created by Samuel Meads on 10/6/26.
 //
 
+import SetctlCore
 import SetctlData
 import SetctlDesignSystem
 import SwiftUI
@@ -63,12 +64,13 @@ struct SettingsView: View {
             Picker(
                 "Units",
                 selection: Binding(
-                    get: { appModel.profile.units },
+                    get: { appModel.weightUnit },
                     set: { appModel.setUnits($0) }
                 )
             ) {
-                Text("kg").tag("kg")
-                Text("lb").tag("lb")
+                ForEach(WeightUnit.allCases, id: \.self) { unit in
+                    Text(unit.rawValue).tag(unit)
+                }
             }
             .pickerStyle(.segmented)
         }
