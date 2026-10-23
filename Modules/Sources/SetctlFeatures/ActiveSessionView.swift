@@ -70,6 +70,7 @@ struct ActiveSessionView: View {
 
                             Button("END SESSION") {
                                 model.endSession()
+                                // Do not show DONE if the final save failed.
                                 if !model.saveFailed {
                                     showingSummary = true
                                     Task { await appModel.requestSync() }
@@ -105,6 +106,7 @@ struct ActiveSessionView: View {
                     )
                 }
                 .onChange(of: showingSummary) { wasShowingSummary, isShowingSummary in
+                    // Leaving the summary also leaves the session screen.
                     if wasShowingSummary, !isShowingSummary {
                         dismiss()
                     }
@@ -112,6 +114,7 @@ struct ActiveSessionView: View {
             }
         }
         .task {
+            // The model needs `appModel`, which is not readable in `init`; the check keeps a re-run from replacing it.
             if model == nil {
                 model = makeModel()
             }
@@ -123,6 +126,7 @@ struct ActiveSessionView: View {
             .formatted(.time(pattern: .minuteSecond))
     }
 
+    /// Resumes the unfinished workout if there is one, otherwise starts a new one.
     private func makeModel() -> ActiveSessionModel {
         let workoutRepository = appModel.workoutRepository
         let resumed = (try? workoutRepository.resolveUnfinishedWorkout()).flatMap { details in
