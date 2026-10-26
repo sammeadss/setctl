@@ -2,4 +2,6 @@
 # Run `swiftformat .` to auto-fix; CI runs `swiftformat --lint .`.
 
 --swiftversion 6.0
+# Keep in sync with SWIFT_VERSION in CI workflow.
+--minversion 0.64.1
 --exclude .build,Modules/.build
