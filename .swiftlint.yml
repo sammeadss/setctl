@@ -2,6 +2,9 @@
 # Run `swiftlint` locally before committing; CI runs `swiftlint --strict`
 # (warnings fail the build), so keep this clean.
 
+# Exact version, keep in sync with SWIFTLINT_VERSION in CI workflow
+swiftlint_version: 0.65.1
+
 opt_in_rules:
   - empty_count
   - first_where

@@ -6,6 +6,13 @@ on:
   push:
     branches: [main]
 
+env:
+  # Pinned so a new release cannot fail an unrelated PR. To bump, change values
+  # and run `brew upgrade swiftformat swiftlint`, then locally fix anything the
+  # new versions flag, and update `.swiftformat` and `.swiftlint.yml` to match.
+  SWIFTFORMAT_VERSION: 0.64.1
+  SWIFTLINT_VERSION: 0.65.1
+
 jobs:
   build-and-test:
     name: Lint, Build & Test
@@ -30,7 +37,18 @@ jobs:
             ${{ runner.os }}-spm-
 
       - name: Install linters
-        run: brew install swiftlint swiftformat
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL -o "$RUNNER_TEMP/swiftformat.zip" \
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/$SWIFTFORMAT_VERSION/swiftformat.zip"
+          curl -fsSL -o "$RUNNER_TEMP/swiftlint.zip" \
+            "https://github.com/realm/SwiftLint/releases/download/$SWIFTLINT_VERSION/portable_swiftlint.zip"
+          unzip -qo "$RUNNER_TEMP/swiftformat.zip" -d "$RUNNER_TEMP/bin"
+          unzip -qo "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/bin"
+          chmod +x "$RUNNER_TEMP/bin/swiftformat" "$RUNNER_TEMP/bin/swiftlint"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+          swiftformat --version
+          swiftlint --version
 
       - name: SwiftFormat (lint)
         run: swiftformat --lint .
