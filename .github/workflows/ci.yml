@@ -47,9 +47,8 @@ jobs:
           unzip -qo "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/bin"
           chmod +x "$RUNNER_TEMP/bin/swiftformat" "$RUNNER_TEMP/bin/swiftlint"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-          swiftformat --version
-          swiftlint --version
-
+          "$RUNNER_TEMP/bin/swiftformat" --version
+          "$RUNNER_TEMP/bin/swiftlint" --version
       - name: SwiftFormat (lint)
         run: swiftformat --lint .
 
