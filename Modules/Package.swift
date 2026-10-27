@@ -30,7 +30,8 @@ let package = Package(
                 "SetctlCore",
                 .product(name: "GRDB", package: "GRDB.swift"),
                 .product(name: "Supabase", package: "supabase-swift"),
-            ]
+            ],
+            resources: [.copy("Resources/exercise-catalog.json")]
         ),
 
         // Feature layer

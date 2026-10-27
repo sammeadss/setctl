@@ -77,10 +77,11 @@ import Testing
 
 @Test func seedsExerciseCatalog() throws {
     let database = try AppDatabase.empty()
+    let expected = try ExerciseCatalog.load().count
 
     try database.read { db in
         let count = try Exercise.fetchCount(db)
-        #expect(count == 8)
+        #expect(count == expected)
 
         let pullUp = try Exercise.fetchOne(db, id: "00000000-0000-0000-0000-000000000006")
         #expect(pullUp?.name == "Pull-Up")
