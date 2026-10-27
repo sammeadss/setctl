@@ -95,7 +95,6 @@ import Testing
     #expect(model.exercises.count == 1)
     #expect(model.exercises[0].exercise.name == "Bench Press")
     #expect(model.exercises[0].sets.map(\.weight) == [100, 105])
-    #expect(model.exercises[0].previousSets.isEmpty)
     #expect(model.workout.endedAt == nil)
 }
 

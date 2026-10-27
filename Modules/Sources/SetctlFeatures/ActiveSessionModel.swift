@@ -50,7 +50,6 @@ final class ActiveSessionModel {
             }
             return SessionExercise(
                 exercise: exercise,
-                previousSets: (try? workoutRepository.fetchLastSets(for: exercise.id)) ?? [],
                 workoutExercise: item.workoutExercise,
                 sets: item.sets
             )
@@ -66,11 +65,8 @@ final class ActiveSessionModel {
             deletedAt: nil
         )
 
-        let previousSets = (try? workoutRepository.fetchLastSets(for: exercise.id)) ?? []
-
         exercises.append(SessionExercise(
             exercise: exercise,
-            previousSets: previousSets,
             workoutExercise: workoutExercise,
             sets: []
         ))
@@ -181,7 +177,6 @@ final class ActiveSessionModel {
 
 struct SessionExercise: Identifiable {
     let exercise: Exercise
-    let previousSets: [SetEntry]
     var workoutExercise: WorkoutExercise
     var sets: [SetEntry]
     /// The workout-exercise id, not the catalog exercise's, so it identifies this entry within the workout.
