@@ -137,7 +137,6 @@ struct RemoteSetEntry: Codable, Equatable {
     var reps: Int
     var weight: Double
     var weightUnit: String
-    var rpe: Double?
     var isWarmup: Bool
     var isCompleted: Bool
     var createdAt: Date
@@ -153,7 +152,6 @@ struct RemoteSetEntry: Codable, Equatable {
         case reps
         case weight
         case weightUnit = "weight_unit"
-        case rpe
         case isWarmup = "is_warmup"
         case isCompleted = "is_completed"
         case createdAt = "created_at"
@@ -170,7 +168,6 @@ struct RemoteSetEntry: Codable, Equatable {
         reps = set.reps
         weight = set.weight
         weightUnit = set.weightUnit
-        rpe = set.rpe
         isWarmup = set.isWarmup
         isCompleted = set.isCompleted
         createdAt = set.createdAt
@@ -187,7 +184,6 @@ struct RemoteSetEntry: Codable, Equatable {
             reps: reps,
             weight: weight,
             weightUnit: weightUnit,
-            rpe: rpe,
             isWarmup: isWarmup,
             isCompleted: isCompleted,
             createdAt: createdAt,
@@ -205,7 +201,6 @@ struct RemoteSetEntry: Codable, Equatable {
         try container.encode(reps, forKey: .reps)
         try container.encode(weight, forKey: .weight)
         try container.encode(weightUnit, forKey: .weightUnit)
-        try container.encode(rpe, forKey: .rpe)
         try container.encode(isWarmup, forKey: .isWarmup)
         try container.encode(isCompleted, forKey: .isCompleted)
         try container.encode(createdAt, forKey: .createdAt)

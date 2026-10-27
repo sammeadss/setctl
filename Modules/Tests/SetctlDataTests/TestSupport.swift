@@ -25,7 +25,7 @@ func makeDetails(
     let setEntries = sets.enumerated().map { index, set in
         SetEntry(
             workoutExerciseId: workoutExercise.id, position: index,
-            reps: set.reps, weight: set.weight, weightUnit: "kg", rpe: nil,
+            reps: set.reps, weight: set.weight, weightUnit: "kg",
             isWarmup: false, isCompleted: true,
             createdAt: date, updatedAt: date, deletedAt: nil
         )

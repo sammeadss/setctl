@@ -176,6 +176,12 @@ public struct AppDatabase: Sendable {
             }
         }
 
+        migrator.registerMigration("v4: drop the unused rpe column") { db in
+            try db.alter(table: "setEntry") { t in
+                t.drop(column: "rpe")
+            }
+        }
+
         return migrator
     }
 
