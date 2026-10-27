@@ -49,6 +49,14 @@ import Testing
     #expect(csv.contains("\"Press, \"\"strict\"\"\""))
 }
 
+@Test func formatsASetWithItsWeight() {
+    #expect(WeightUnit.kg.formatSet(reps: 8, kilograms: 100) == "8 x 100.0kg")
+}
+
+@Test func formatsAnUnweightedSetAsRepsOnly() {
+    #expect(WeightUnit.lb.formatSet(reps: 12, kilograms: 0) == "12 reps")
+}
+
 private func sampleRow(exercise: String = "Squat", kilograms: Double = 100) -> SetExportRow {
     SetExportRow(
         workoutDate: Date(timeIntervalSince1970: 0),
