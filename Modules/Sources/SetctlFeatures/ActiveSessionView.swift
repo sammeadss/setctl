@@ -91,6 +91,8 @@ struct ActiveSessionView: View {
                             .foregroundStyle(Palette.green)
                         }
                     #endif
+                        .scrollContentBackground(.hidden)
+                        .scrollDismissesKeyboard(.interactively)
                 }
                 .sheet(isPresented: $showingPicker) {
                     ExercisePickerView { exercise in

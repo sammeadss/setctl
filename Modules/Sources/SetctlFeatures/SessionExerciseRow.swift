@@ -17,8 +17,13 @@ struct SessionExerciseRow: View {
     let onDeleteSet: (String) -> Void
     let onMoveSets: (IndexSet, Int) -> Void
 
-    @State private var reps: Int
-    @State private var weight: Double
+    private enum Field {
+        case reps, weight
+    }
+
+    @State private var repsText = ""
+    @State private var weightText = ""
+    @FocusState private var focusedField: Field?
 
     init(
         item: SessionExercise,
@@ -32,31 +37,23 @@ struct SessionExerciseRow: View {
         self.onAddSet = onAddSet
         self.onDeleteSet = onDeleteSet
         self.onMoveSets = onMoveSets
-        _reps = State(initialValue: item.previousSets.first?.reps ?? 8)
-        let lastWeight = item.previousSets.first.map { unit.fromKilograms($0.weight) }
-        _weight = State(initialValue: lastWeight ?? (unit == .kg ? 20 : 45))
     }
 
-    private var weightStep: Double {
-        unit == .kg ? 2.5 : 5
+    private var reps: Int? {
+        guard let value = Int(repsText), (1 ... 999).contains(value) else { return nil }
+        return value
     }
 
-    private var lastWorkoutSummary: String {
-        "LAST: " + item.previousSets
-            .map { "\($0.reps)×\(unit.format(kilograms: $0.weight))" }
-            .joined(separator: ", ")
+    private var weight: Double? {
+        guard !weightText.isEmpty else { return 0 }
+        guard let value = try? Double(weightText, format: .number), (0 ... 9999).contains(value) else { return nil }
+        return value
     }
 
     var body: some View {
         Text(item.exercise.name)
             .font(Typography.body)
             .foregroundStyle(Palette.green)
-
-        if !item.previousSets.isEmpty {
-            Text(lastWorkoutSummary)
-                .font(Typography.label)
-                .foregroundStyle(Palette.greenDim)
-        }
 
         ForEach(item.sets) { set in
             Text("\(set.reps) x \(unit.format(kilograms: set.weight))")
@@ -72,24 +69,42 @@ struct SessionExerciseRow: View {
             onMoveSets(source, destination)
         }
 
-        Stepper("\(reps) reps", value: $reps, in: 1 ... 50)
-            .font(Typography.label)
-            .foregroundStyle(Palette.green)
-
-        Stepper(
-            "\(weight, specifier: "%.1f") \(unit.rawValue)",
-            value: $weight,
-            in: 0 ... unit.fromKilograms(500),
-            step: weightStep
-        )
-        .font(Typography.label)
-        .foregroundStyle(Palette.green)
-
-        Button("+ ADD SET") {
-            // The row works in the display unit; the model stores kilograms.
-            onAddSet(reps, unit.toKilograms(weight))
+        HStack {
+            TextField("0", text: $repsText, prompt: Text("0").foregroundStyle(Palette.greenDim))
+                .focused($focusedField, equals: .reps)
+                .multilineTextAlignment(.trailing)
+            #if os(iOS)
+                .keyboardType(.numberPad)
+            #endif
+            Text("reps")
         }
         .font(Typography.label)
         .foregroundStyle(Palette.green)
+        .tint(Palette.green)
+
+        HStack {
+            TextField("0", text: $weightText, prompt: Text("0").foregroundStyle(Palette.greenDim))
+                .focused($focusedField, equals: .weight)
+                .multilineTextAlignment(.trailing)
+            #if os(iOS)
+                .keyboardType(.decimalPad)
+            #endif
+            Text(unit.rawValue)
+        }
+        .font(Typography.label)
+        .foregroundStyle(Palette.green)
+        .tint(Palette.green)
+
+        Button("+ ADD SET") {
+            guard let reps, let weight else { return }
+            // The row works in the display unit; the model stores kilograms.
+            onAddSet(reps, unit.toKilograms(weight))
+            repsText = ""
+            weightText = ""
+            focusedField = .reps
+        }
+        .font(Typography.label)
+        .foregroundStyle(Palette.green)
+        .disabled(reps == nil || weight == nil)
     }
 }
