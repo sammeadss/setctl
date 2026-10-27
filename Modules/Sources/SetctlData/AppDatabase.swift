@@ -182,6 +182,10 @@ public struct AppDatabase: Sendable {
             }
         }
 
+        migrator.registerMigration("v5: full exercise catalog") { db in
+            try ExerciseCatalog.sync(into: db)
+        }
+
         return migrator
     }
 
