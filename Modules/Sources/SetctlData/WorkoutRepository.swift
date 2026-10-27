@@ -111,27 +111,6 @@ public struct WorkoutRepository {
         }
     }
 
-    public func fetchLastSets(for exerciseId: String) throws -> [SetEntry] {
-        try database.read { db in
-            let lastWorkoutExercise = try WorkoutExercise.filter(Column("exerciseId") == exerciseId)
-                .filter(Column("deletedAt") == nil)
-                .joining(required: WorkoutExercise.workout
-                    .filter(Column("deletedAt") == nil)
-                    .filter(Column("endedAt") != nil)
-                    .order(Column("startedAt").desc))
-                .fetchOne(db)
-
-            guard let lastWorkoutExercise else {
-                return []
-            }
-
-            return try SetEntry.filter(Column("workoutExerciseId") == lastWorkoutExercise.id)
-                .filter(Column("deletedAt") == nil)
-                .order(Column("position"))
-                .fetchAll(db)
-        }
-    }
-
     /// Finished workouts, newest first, with duration and total volume.
     public func fetchRecentWorkouts() throws -> [WorkoutSummary] {
         try database.read { db in
