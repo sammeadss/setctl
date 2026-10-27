@@ -14,10 +14,10 @@ public struct AppDatabase: Sendable {
 
     init(_ dbWriter: some DatabaseWriter) throws {
         self.dbWriter = dbWriter
-        try migrator.migrate(dbWriter)
+        try Self.migrator.migrate(dbWriter)
     }
 
-    private var migrator: DatabaseMigrator {
+    static var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
         #if DEBUG
             // Wipes the database when an already-registered migration is edited. Release
