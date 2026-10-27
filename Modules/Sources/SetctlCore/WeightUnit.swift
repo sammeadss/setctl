@@ -38,4 +38,9 @@ public enum WeightUnit: String, CaseIterable, Sendable {
     public func format(kilograms: Double) -> String {
         String(format: "%.1f", fromKilograms(kilograms)) + rawValue
     }
+
+    /// A set is shows in lists: "8 x 100kg", or just "12 reps" when no weight was logged.
+    public func formatSet(reps: Int, kilograms: Double) -> String {
+        kilograms.isZero ? "\(reps) reps" : "\(reps) x \(format(kilograms: kilograms))"
+    }
 }
