@@ -21,6 +21,8 @@ struct SessionExerciseRow: View {
         case reps, weight
     }
 
+    // Plain text, not `TextField(value:format:)`, which commits when editing ends and could miss a value typed just
+    // before tapping ADD SET.
     @State private var repsText = ""
     @State private var weightText = ""
     @FocusState private var focusedField: Field?
@@ -44,8 +46,9 @@ struct SessionExerciseRow: View {
         return value
     }
 
+    /// The typed weight in the display unit. Bodyweight exercises log reps only, and an empty field also counts as 0.
     private var weight: Double? {
-        guard !weightText.isEmpty else { return 0 }
+        guard !item.exercise.isBodyweight, !weightText.isEmpty else { return 0 }
         guard let value = try? Double(weightText, format: .number), (0 ... 9999).contains(value) else { return nil }
         return value
     }
@@ -56,7 +59,7 @@ struct SessionExerciseRow: View {
             .foregroundStyle(Palette.green)
 
         ForEach(item.sets) { set in
-            Text("\(set.reps) x \(unit.format(kilograms: set.weight))")
+            Text(unit.formatSet(reps: set.reps, kilograms: set.weight))
                 .font(Typography.label)
                 .foregroundStyle(Palette.greenDim)
         }
@@ -82,18 +85,20 @@ struct SessionExerciseRow: View {
         .foregroundStyle(Palette.green)
         .tint(Palette.green)
 
-        HStack {
-            TextField("0", text: $weightText, prompt: Text("0").foregroundStyle(Palette.greenDim))
-                .focused($focusedField, equals: .weight)
-                .multilineTextAlignment(.trailing)
-            #if os(iOS)
-                .keyboardType(.decimalPad)
-            #endif
-            Text(unit.rawValue)
+        if !item.exercise.isBodyweight {
+            HStack {
+                TextField("0", text: $weightText, prompt: Text("0").foregroundStyle(Palette.greenDim))
+                    .focused($focusedField, equals: .weight)
+                    .multilineTextAlignment(.trailing)
+                #if os(iOS)
+                    .keyboardType(.decimalPad)
+                #endif
+                Text(unit.rawValue)
+            }
+            .font(Typography.label)
+            .foregroundStyle(Palette.green)
+            .tint(Palette.green)
         }
-        .font(Typography.label)
-        .foregroundStyle(Palette.green)
-        .tint(Palette.green)
 
         Button("+ ADD SET") {
             guard let reps, let weight else { return }
