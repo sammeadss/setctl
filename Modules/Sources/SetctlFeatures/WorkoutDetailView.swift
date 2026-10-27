@@ -30,7 +30,7 @@ public struct WorkoutDetailView: View {
                     ForEach(details.exercises, id: \.workoutExercise.id) { exerciseWithSets in
                         Section {
                             ForEach(exerciseWithSets.sets) { set in
-                                Text("\(set.reps) x \(appModel.weightUnit.format(kilograms: set.weight))")
+                                Text(appModel.weightUnit.formatSet(reps: set.reps, kilograms: set.weight))
                                     .font(Typography.label)
                                     .foregroundStyle(Palette.greenDim)
                             }
@@ -40,9 +40,12 @@ public struct WorkoutDetailView: View {
                                 .font(Typography.body)
                                 .foregroundStyle(Palette.green)
                         } footer: {
-                            Text(appModel.weightUnit.format(kilograms: exerciseVolume(for: exerciseWithSets)))
-                                .font(Typography.label)
-                                .foregroundStyle(Palette.greenDim)
+                            let volume = exerciseVolume(for: exerciseWithSets)
+                            if volume > 0 {
+                                Text(appModel.weightUnit.format(kilograms: volume))
+                                    .font(Typography.label)
+                                    .foregroundStyle(Palette.greenDim)
+                            }
                         }
                     }
                 }
