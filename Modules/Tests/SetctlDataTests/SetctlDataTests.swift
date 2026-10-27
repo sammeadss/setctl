@@ -51,13 +51,13 @@ import Testing
     )
     let set1 = SetEntry(
         workoutExerciseId: workoutExercise.id, position: 0,
-        reps: 5, weight: 100, weightUnit: "kg", rpe: nil,
+        reps: 5, weight: 100, weightUnit: "kg",
         isWarmup: false, isCompleted: true,
         createdAt: date, updatedAt: date, deletedAt: nil
     )
     let set2 = SetEntry(
         workoutExerciseId: workoutExercise.id, position: 1,
-        reps: 5, weight: 105, weightUnit: "kg", rpe: 8,
+        reps: 5, weight: 105, weightUnit: "kg",
         isWarmup: false, isCompleted: true,
         createdAt: date, updatedAt: date, deletedAt: nil
     )
@@ -272,7 +272,7 @@ import Testing
     #expect(workoutJSON["note"] is NSNull)
     #expect(workoutJSON["deleted_at"] is NSNull)
     #expect(workoutJSON["server_updated_at"] == nil)
-    #expect(setJSON["rpe"] is NSNull)
+    #expect(setJSON["deleted_at"] is NSNull)
 }
 
 private func sampleDetails() -> WorkoutDetails {

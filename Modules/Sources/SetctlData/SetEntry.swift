@@ -16,7 +16,6 @@ public struct SetEntry: Codable, Identifiable, Equatable, FetchableRecord, Persi
     public var reps: Int
     public var weight: Double
     public var weightUnit: String
-    public var rpe: Double?
     public var isWarmup: Bool
     public var isCompleted: Bool
     public var createdAt: Date
@@ -30,7 +29,6 @@ public struct SetEntry: Codable, Identifiable, Equatable, FetchableRecord, Persi
         reps: Int,
         weight: Double,
         weightUnit: String,
-        rpe: Double? = nil,
         isWarmup: Bool,
         isCompleted: Bool,
         createdAt: Date,
@@ -43,7 +41,6 @@ public struct SetEntry: Codable, Identifiable, Equatable, FetchableRecord, Persi
         self.reps = reps
         self.weight = weight
         self.weightUnit = weightUnit
-        self.rpe = rpe
         self.isWarmup = isWarmup
         self.isCompleted = isCompleted
         self.createdAt = createdAt
