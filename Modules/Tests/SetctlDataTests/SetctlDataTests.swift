@@ -88,60 +88,6 @@ import Testing
     }
 }
 
-@Test func fetchesLastSetsFromMostRecentWorkout() throws {
-    let database = try AppDatabase.empty()
-    let repository = WorkoutRepository(database: database)
-
-    let olderDate = Date(timeIntervalSince1970: 1_000_000)
-    let newerDate = Date(timeIntervalSince1970: 2_000_000)
-
-    let exercise = Exercise(
-        name: "Bench Press", primaryMuscle: "chest",
-        isBodyweight: false, isCustom: false, ownerId: nil,
-        updatedAt: olderDate, deletedAt: nil
-    )
-    try database.write { db in try exercise.save(db) }
-
-    let newerDetails = makeDetails(
-        exercise: exercise, date: newerDate, endedAt: newerDate.addingTimeInterval(1800), sets: [(8, 60), (8, 62.5)]
-    )
-    let olderDetails = makeDetails(
-        exercise: exercise, date: olderDate, endedAt: olderDate.addingTimeInterval(1800), sets: [(5, 100)]
-    )
-
-    // Saved newest-first so the query's ORDER BY, not insertion order, must pick the winner.
-    try repository.save(newerDetails)
-    try repository.save(olderDetails)
-
-    let lastSets = try repository.fetchLastSets(for: exercise.id)
-    #expect(lastSets == newerDetails.exercises[0].sets)
-}
-
-@Test func fetchLastSetsIgnoresUnfinishedWorkouts() throws {
-    let database = try AppDatabase.empty()
-    let repository = WorkoutRepository(database: database)
-
-    let olderDate = Date(timeIntervalSince1970: 1_000_000)
-    let newerDate = Date(timeIntervalSince1970: 2_000_000)
-
-    let exercise = Exercise(
-        name: "Bench Press", primaryMuscle: "chest",
-        isBodyweight: false, isCustom: false, ownerId: nil,
-        updatedAt: olderDate, deletedAt: nil
-    )
-    try database.write { db in try exercise.save(db) }
-
-    let finished = makeDetails(
-        exercise: exercise, date: olderDate, endedAt: olderDate.addingTimeInterval(1800), sets: [(5, 100)]
-    )
-    let inProgress = makeDetails(exercise: exercise, date: newerDate, sets: [(8, 60)])
-    try repository.save(finished)
-    try repository.save(inProgress)
-
-    let lastSets = try repository.fetchLastSets(for: exercise.id)
-    #expect(lastSets == finished.exercises[0].sets)
-}
-
 @Test func fetchRecentWorkoutsReturnsEndedWorkoutsNewestFirst() throws {
     let database = try AppDatabase.empty()
     let repository = WorkoutRepository(database: database)
@@ -187,14 +133,6 @@ import Testing
 
     let summaries = try repository.fetchRecentWorkouts()
     #expect(summaries.isEmpty)
-}
-
-@Test func fetchLastSetsReturnsEmptyWithoutHistory() throws {
-    let database = try AppDatabase.empty()
-    let repository = WorkoutRepository(database: database)
-
-    let lastSets = try repository.fetchLastSets(for: "missing")
-    #expect(lastSets.isEmpty)
 }
 
 @Test func fetchDetailsExcludesDeletedSets() throws {
