@@ -17,10 +17,7 @@ enum ExerciseCatalog {
         let bodyweight: Bool
     }
 
-    static let muscles: Set<String> = [
-        "chest", "back", "shoulders", "biceps", "triceps", "forearms",
-        "quads", "hamstrings", "glutes", "calves", "core",
-    ]
+    static let muscles = Set(Exercise.muscleGroups)
 
     static func load() throws -> [Entry] {
         guard let url = Bundle.module.url(forResource: "exercise-catalog", withExtension: "json") else {
