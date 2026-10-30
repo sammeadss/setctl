@@ -26,12 +26,22 @@ struct ExercisePickerView: View {
             ZStack {
                 Palette.black.ignoresSafeArea()
 
-                List(filteredExercises) { exercise in
-                    Button(exercise.name) {
-                        onSelect(exercise)
+                List {
+                    ForEach(Exercise.grouped(filteredExercises)) { group in
+                        Section {
+                            ForEach(group.exercises) { exercise in
+                                Button(exercise.name) {
+                                    onSelect(exercise)
+                                }
+                                .foregroundStyle(Palette.green)
+                                .listRowBackground(Color.clear)
+                            }
+                        } header: {
+                            Text(group.muscle.uppercased())
+                                .font(Typography.label)
+                                .foregroundStyle(Palette.greenDim)
+                        }
                     }
-                    .foregroundStyle(Palette.green)
-                    .listRowBackground(Color.clear)
                 }
                 .scrollContentBackground(.hidden)
             }
