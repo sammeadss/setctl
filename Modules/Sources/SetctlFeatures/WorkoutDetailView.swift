@@ -59,7 +59,7 @@ public struct WorkoutDetailView: View {
                 let exercises = try appModel.exerciseRepository.fetchAllExercises()
                 exerciseNames = Dictionary(uniqueKeysWithValues: exercises.map { ($0.id, $0.name) })
             } catch {
-                print("Failed to load workout detail: \(error)")
+                AppLog.ui.error("Failed to load workout detail: \(error)")
             }
         }
     }
