@@ -157,6 +157,7 @@ final class ActiveSessionModel {
             saveFailed = false
         } catch {
             saveFailed = true
+            AppLog.data.error("Autosave failed: \(error)")
         }
     }
 

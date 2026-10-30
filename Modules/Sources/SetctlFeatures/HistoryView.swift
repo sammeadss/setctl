@@ -47,7 +47,7 @@ public struct HistoryView: View {
             do {
                 summaries = try appModel.workoutRepository.fetchRecentWorkouts()
             } catch {
-                print("Failed to load workout history: \(error)")
+                AppLog.ui.error("Failed to load workout history: \(error)")
             }
         }
     }

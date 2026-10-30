@@ -5,6 +5,7 @@
 //  Created by Samuel Meads on 7/25/26.
 //
 
+import SetctlCore
 import SetctlData
 import SetctlDesignSystem
 import SwiftUI
@@ -51,7 +52,7 @@ struct ExercisePickerView: View {
             do {
                 exercises = try appModel.exerciseRepository.fetchAllExercises()
             } catch {
-                print("Failed to load exercises: \(error)")
+                AppLog.ui.error("Failed to load exercises: \(error)")
             }
         }
     }

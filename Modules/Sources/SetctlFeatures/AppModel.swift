@@ -101,6 +101,7 @@ public final class AppModel {
         do {
             result = try await .success(syncService.sync(userId: userId))
         } catch {
+            AppLog.sync.error("Sync failed: \(error)")
             result = .failure(error)
         }
         syncStatus = SyncStatus.from(result)
