@@ -5,6 +5,7 @@
 //  Created by Samuel Meads on 10/5/26.
 //
 
+import SetctlCore
 import SetctlData
 import SetctlDesignSystem
 import SwiftUI
@@ -57,6 +58,6 @@ public struct HistoryView: View {
 
     private func detailText(for summary: WorkoutSummary) -> String {
         let volume = appModel.weightUnit.format(kilograms: summary.totalVolume)
-        return "\(formattedDuration(summary.duration)) \(volume)"
+        return "\(DurationFormat.clock(summary.duration)) \(volume)"
     }
 }

@@ -57,6 +57,22 @@ import Testing
     #expect(WeightUnit.lb.formatSet(reps: 12, kilograms: 0) == "12 reps")
 }
 
+@Test func clockShowsMinutesAndSecondsUnderAnHour() {
+    #expect(DurationFormat.clock(0) == "0:00")
+    #expect(DurationFormat.clock(65) == "1:05")
+    #expect(DurationFormat.clock(3599) == "59:59")
+}
+
+@Test func clockShowsHoursFromAnHourOn() {
+    #expect(DurationFormat.clock(3600) == "1:00:00")
+    #expect(DurationFormat.clock(3890) == "1:04:50")
+    #expect(DurationFormat.clock(35112) == "9:45:12")
+}
+
+@Test func clockTreatsNegativeTimeAsZero() {
+    #expect(DurationFormat.clock(-5) == "0:00")
+}
+
 private func sampleRow(exercise: String = "Squat", kilograms: Double = 100) -> SetExportRow {
     SetExportRow(
         workoutDate: Date(timeIntervalSince1970: 0),

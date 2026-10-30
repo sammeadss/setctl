@@ -24,7 +24,7 @@ struct SessionSummaryView: View {
                     .font(Typography.title)
                     .foregroundStyle(Palette.green)
 
-                Text("\(Int(duration) / 60)min \(Int(duration) % 60)s")
+                Text(DurationFormat.clock(duration))
                     .font(Typography.body)
                     .foregroundStyle(Palette.greenDim)
 
