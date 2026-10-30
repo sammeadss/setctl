@@ -21,6 +21,8 @@ struct SetctlApp: App {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
 
+    private let diagnostics = DiagnosticsCollector.startStandard()
+
     init() {
         do {
             let database = try AppDatabase.makeShared()
