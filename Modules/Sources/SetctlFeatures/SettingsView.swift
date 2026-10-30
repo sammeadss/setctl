@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var deletion = Deletion.idle
     @State private var isConfirmingDelete = false
     @State private var isManagingSubscription = false
+    @State private var diagnosticsFiles: [URL] = []
 
     private enum Deletion {
         case idle, deleting, failed, deleted
@@ -55,12 +56,16 @@ struct SettingsView: View {
 
                         exportSection
 
+                        diagnosticsSection
+
                         accountSection
                     }
                     .padding(Spacing.lg)
                 }
                 // Rebuilt when the unit changes, because the CSV carries converted weights.
                 .task(id: appModel.weightUnit) { prepareExport() }
+                .task(id: appModel.weightUnit) { prepareExport() }
+                .task { diagnosticsFiles = (try? DiagnosticsStore.standard().files()) ?? [] }
             }
             .toolbar {
                 Button("DONE") { dismiss() }
@@ -250,6 +255,17 @@ struct SettingsView: View {
             Text("EXPORT UNAVAILABLE")
                 .font(Typography.label)
                 .foregroundStyle(Palette.amber)
+        }
+    }
+
+    @ViewBuilder
+    private var diagnosticsSection: some View {
+        if !diagnosticsFiles.isEmpty {
+            ShareLink(items: diagnosticsFiles) {
+                Text("EXPORT DIAGNOSTICS (\(diagnosticsFiles.count))")
+            }
+            .font(Typography.label)
+            .foregroundStyle(Palette.greenDim)
         }
     }
 
