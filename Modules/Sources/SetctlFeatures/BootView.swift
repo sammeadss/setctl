@@ -22,6 +22,8 @@ public struct BootView: View {
 
     public init(onFinished: @escaping () -> Void) {
         self.onFinished = onFinished
+        // Build the frames before the first frame is drawn.
+        _ = Self.frames
     }
 
     public var body: some View {
@@ -48,26 +50,30 @@ public struct BootView: View {
     }
 
     /// Phases in order: noise, reveal of the first figure frame, the transition frames, a hold on the last one, then a
-    /// morph into the resolve frame.
+    /// morph into the resolve frame. Every frame is prepared in advance; this only picks one.
     private func currentFrame(at elapsed: TimeInterval) -> String {
+        let frames = Self.frames
         switch elapsed {
         case ..<scrambleDuration:
-            return randomNoise()
+            return frames.noise[Int(elapsed / tickInterval) % frames.noise.count]
         case ..<revealEndTime:
-            let progress = (elapsed - scrambleDuration) / revealDuration
-            return cellReveal(progress: progress, target: transitionFrames.first ?? "")
+            return frames.reveal[frameIndex((elapsed - scrambleDuration) / revealDuration, in: frames.reveal)]
         case ..<transitionEndTime:
-            guard !transitionFrames.isEmpty else { return "" }
+            guard !frames.transition.isEmpty else { return "" }
             let index = Int((elapsed - revealEndTime) / frameInterval)
-            return transitionFrames[min(index, transitionFrames.count - 1)]
+            return frames.transition[min(index, frames.transition.count - 1)]
         case ..<holdEndTime:
-            return transitionFrames.last ?? resolveFrame
+            return frames.transition.last ?? frames.resolve
         case ..<morphEndTime:
-            let progress = (elapsed - holdEndTime) / morphDuration
-            return morphedFrame(progress: progress, from: transitionFrames.last ?? resolveFrame, to: resolveFrame)
+            return frames.morph[frameIndex((elapsed - holdEndTime) / morphDuration, in: frames.morph)]
         default:
-            return resolveFrame
+            return frames.resolve
         }
+    }
+
+    /// The prepared frame for a 0-to-1 progress through a phase.
+    private func frameIndex(_ progress: Double, in frames: [String]) -> Int {
+        min(max(Int(progress * Double(frames.count)), 0), frames.count - 1)
     }
 
     private func runSequence() async {
@@ -103,8 +109,6 @@ public struct BootView: View {
     }
 
     private let figureFontSize: CGFloat = 6
-    private let figureColumns = 90
-    private let figureRows = 115
     private let tickInterval: TimeInterval = 0.08
     private let scrambleDuration: TimeInterval = 1.2
     private let transitionHoldDuration: TimeInterval = 1.2
@@ -113,11 +117,10 @@ public struct BootView: View {
     private let bloomTriggerFrameIndex = 10
     private let poseHoldDuration: TimeInterval = 0.4
     private let morphDuration: TimeInterval = 0.6
-    private let transitionFrames = BootView.loadTransitionFrames()
-    private let resolveFrame = BootView.loadResolveFrame()
+    private static let frames = BootFrames(transition: loadTransitionFrames(), resolve: loadResolveFrame())
 
     private var frameInterval: TimeInterval {
-        transitionHoldDuration / Double(max(transitionFrames.count, 1))
+        transitionHoldDuration / Double(max(Self.frames.transition.count, 1))
     }
 
     private var revealEndTime: TimeInterval {
@@ -156,50 +159,6 @@ public struct BootView: View {
             let text = try? String(contentsOf: url, encoding: .utf8)
         else { return "" }
         return text
-    }
-
-    private static let noiseGlyphs = Array("01#$%&*@!?+=-:.")
-
-    private func randomNoise() -> String {
-        (0 ..< figureRows)
-            .map { _ in String((0 ..< figureColumns).map { _ in BootView.noiseGlyphs.randomElement() ?? "." }) }
-            .joined(separator: "\n")
-    }
-
-    /// One random threshold per character cell, so reveals and morphs uncover cells in a fixed order instead of
-    /// re-randomizing every tick.
-    private let cellThresholds = BootView.makeCellThresholds(count: 90 * 115) // matches figureColumns × figureRows
-
-    private static func makeCellThresholds(count: Int) -> [Double] {
-        (0 ..< count).map { _ in Double.random(in: 0 ... 1) }
-    }
-
-    private func cellReveal(progress: Double, target: String) -> String {
-        guard !target.isEmpty else { return randomNoise() }
-        let targetLines = target.split(separator: "\n", omittingEmptySubsequences: false)
-        var cellIndex = 0
-        return targetLines.map { line in
-            let chars = line.map { char -> Character in
-                defer { cellIndex += 1 }
-                let threshold = cellIndex < cellThresholds.count ? cellThresholds[cellIndex] : 1
-                return progress >= threshold ? char : (BootView.noiseGlyphs.randomElement() ?? ".")
-            }
-            return String(chars)
-        }.joined(separator: "\n")
-    }
-
-    private func morphedFrame(progress: Double, from: String, to: String) -> String {
-        let fromLines = from.split(separator: "\n", omittingEmptySubsequences: false)
-        let toLines = to.split(separator: "\n", omittingEmptySubsequences: false)
-        var cellIndex = 0
-        return zip(fromLines, toLines).map { fromLine, toLine in
-            let chars = zip(fromLine, toLine).map { fromChar, toChar -> Character in
-                defer { cellIndex += 1 }
-                let threshold = cellIndex < cellThresholds.count ? cellThresholds[cellIndex] : 1
-                return progress >= threshold ? toChar : fromChar
-            }
-            return String(chars)
-        }.joined(separator: "\n")
     }
 }
 
