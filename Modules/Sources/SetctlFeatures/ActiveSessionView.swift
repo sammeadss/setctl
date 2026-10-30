@@ -5,6 +5,7 @@
 //  Created by Samuel Meads on 7/23/26.
 //
 
+import SetctlCore
 import SetctlData
 import SetctlDesignSystem
 import SwiftUI
@@ -125,8 +126,7 @@ struct ActiveSessionView: View {
     }
 
     private func formattedElapsed(from startedAt: Date, to now: Date) -> String {
-        Duration.seconds(now.timeIntervalSince(startedAt))
-            .formatted(.time(pattern: .minuteSecond))
+        DurationFormat.clock(now.timeIntervalSince(startedAt))
     }
 
     /// Resumes the unfinished workout if there is one, otherwise starts a new one.
