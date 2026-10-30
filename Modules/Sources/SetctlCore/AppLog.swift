@@ -14,4 +14,5 @@ public enum AppLog {
     public static let data = Logger(subsystem: subsystem, category: "data")
     public static let sync = Logger(subsystem: subsystem, category: "sync")
     public static let ui = Logger(subsystem: subsystem, category: "ui")
+    public static let diagnostics = Logger(subsystem: subsystem, category: "diagnostics")
 }
