@@ -83,18 +83,19 @@ public struct BootView: View {
             return
         }
 
-        // The bloom and haptic fire when the transition reaches `bloomTriggerFrameIndex`.
-        let bloomDelay = scrambleDuration + revealDuration + Double(bloomTriggerFrameIndex) * frameInterval
-        try? await Task.sleep(for: .seconds(bloomDelay))
+        // The bloom and haptic fire on the tick that first shows `bloomTriggerFrameIndex`.
+        let wait = bloomTime - Date().timeIntervalSince(bootStart)
+        try? await Task.sleep(for: .seconds(max(wait, 0)))
         // A tap while waiting has already finished the boot.
         guard !isSkipped else { return }
         if isHapticsEnabled {
             hapticEngine.playFlexPump()
-            withAnimation(.easeOut(duration: 0.15)) { bloomIntensity = 1 }
-            withAnimation(.easeIn(duration: 0.65).delay(0.15)) { bloomIntensity = 0 }
+            withAnimation(.easeOut(duration: 0.08)) { bloomIntensity = 1 }
+            try? await Task.sleep(for: .milliseconds(80))
+            withAnimation(.easeIn(duration: 0.65)) { bloomIntensity = 0 }
         }
 
-        try? await Task.sleep(for: .seconds(totalDuration - bloomDelay))
+        try? await Task.sleep(for: .seconds(max(totalDuration - Date().timeIntervalSince(bootStart), 0)))
         guard !isSkipped else { return }
         finish()
     }
@@ -108,10 +109,9 @@ public struct BootView: View {
         onFinished()
     }
 
-    private let figureFontSize: CGFloat = 6
+    private let figureFontSize: CGFloat = 5.5
     private let tickInterval: TimeInterval = 0.08
     private let scrambleDuration: TimeInterval = 1.2
-    private let transitionHoldDuration: TimeInterval = 1.2
     private let resolveHoldDuration: TimeInterval = 1.05
     private let revealDuration: TimeInterval = 0.3
     private let bloomTriggerFrameIndex = 10
@@ -120,7 +120,7 @@ public struct BootView: View {
     private static let frames = BootFrames(transition: loadTransitionFrames(), resolve: loadResolveFrame())
 
     private var frameInterval: TimeInterval {
-        transitionHoldDuration / Double(max(Self.frames.transition.count, 1))
+        tickInterval
     }
 
     private var revealEndTime: TimeInterval {
@@ -128,7 +128,7 @@ public struct BootView: View {
     }
 
     private var transitionEndTime: TimeInterval {
-        revealEndTime + transitionHoldDuration
+        revealEndTime + Double(Self.frames.transition.count) * frameInterval
     }
 
     private var holdEndTime: TimeInterval {
@@ -141,6 +141,12 @@ public struct BootView: View {
 
     private var totalDuration: TimeInterval {
         morphEndTime + resolveHoldDuration
+    }
+
+    /// First tick at which the trigger frame is on screen.
+    private var bloomTime: TimeInterval {
+        let ideal = revealEndTime + Double(bloomTriggerFrameIndex) * frameInterval
+        return (ideal / tickInterval).rounded(.up) * tickInterval
     }
 
     /// A missing resource yields no frames rather than a crash; every phase tolerates an empty list.
