@@ -89,6 +89,13 @@ public final class AppModel {
         }
     }
 
+    /// Returns whether Pro is active after syncing with the App Store; throws if the App Store cannot be reached.
+    public func restorePurchases() async throws -> Bool {
+        let isEntitled = try await entitlementRepository.restore()
+        isPro = isEntitled
+        return isEntitled
+    }
+
     /// Syncs now when signed in with a Pro account, otherwise sets the status to off. Failures are reported through
     /// `syncStatus`, not thrown.
     public func requestSync() async {
