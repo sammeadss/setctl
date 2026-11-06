@@ -214,11 +214,20 @@ struct SettingsView: View {
                 .foregroundStyle(Palette.greenDim)
         } else if let product = appModel.proProduct {
             // Nothing is offered until the StoreKit product has loaded.
-            Button("UPGRADE TO PRO \(product.displayPrice)/MO") {
-                Task { await appModel.purchasePro() }
+            VStack(spacing: Spacing.xs) {
+                Button("UPGRADE TO PRO \(product.displayPrice)/MO") {
+                    Task { await appModel.purchasePro() }
+                }
+                .font(Typography.body)
+                .foregroundStyle(Palette.green)
+
+                Text("RENEWS MONTHLY UNTIL CANCELLED. CANCEL ANYTIME IN YOUR APPLE ID SUBSCRIPTIONS.")
+                    .font(Typography.label)
+                    .foregroundStyle(Palette.greenDim)
+                    .multilineTextAlignment(.center)
+
+                RestorePurchasesButton()
             }
-            .font(Typography.body)
-            .foregroundStyle(Palette.green)
         }
     }
 

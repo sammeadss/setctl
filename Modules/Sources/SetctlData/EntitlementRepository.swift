@@ -35,6 +35,12 @@ public struct EntitlementRepository: Sendable {
         }
     }
 
+    /// Asks the App Store to sync this Apple ID's purchases, then reports whether the user is entitled.
+    public func restore() async throws -> Bool {
+        try await AppStore.sync()
+        return await currentlyEntitled()
+    }
+
     /// Emits whether the user is entitled, once immediately and again after each transaction update.
     public var entitlementUpdates: AsyncStream<Bool> {
         AsyncStream { continuation in
