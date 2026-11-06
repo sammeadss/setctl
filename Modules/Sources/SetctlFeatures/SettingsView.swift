@@ -64,7 +64,6 @@ struct SettingsView: View {
                 }
                 // Rebuilt when the unit changes, because the CSV carries converted weights.
                 .task(id: appModel.weightUnit) { prepareExport() }
-                .task(id: appModel.weightUnit) { prepareExport() }
                 .task { diagnosticsFiles = (try? DiagnosticsStore.standard().files()) ?? [] }
             }
             .toolbar {
