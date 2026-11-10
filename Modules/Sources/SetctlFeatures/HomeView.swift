@@ -12,7 +12,6 @@ import SwiftUI
 public struct HomeView: View {
     @State private var isSessionActive = false
     @State private var isSettingsPresented = false
-    @AppStorage(StorageKey.scanlinesEnabled) private var isScanlinesEnabled = true
     @Environment(AppModel.self) private var appModel
     @State private var hasUnfinishedWorkout = false
 
@@ -22,15 +21,25 @@ public struct HomeView: View {
         NavigationStack {
             ZStack {
                 Palette.black.ignoresSafeArea()
-                CornerFrame {
-                    Button(hasUnfinishedWorkout ? "RESUME" : "BEGIN") {
-                        isSessionActive = true
-                    }
-                    .font(Typography.hero)
-                    .foregroundStyle(Palette.green)
+                Button {
+                    isSessionActive = true
+                } label: {
+                    PowerSymbol()
+                        .fill(Palette.green)
+                        .frame(width: 160, height: 160)
+                        .overlay(alignment: .bottom) {
+                            if hasUnfinishedWorkout {
+                                Text("WORKOUT IN PROGRESS")
+                                    .font(Typography.label)
+                                    .foregroundStyle(Palette.greenDim)
+                                    .fixedSize()
+                                    .offset(y: Spacing.xl)
+                            }
+                        }
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(hasUnfinishedWorkout ? "Resume workout" : "Begin workout")
             }
-            .scanlines(isEnabled: isScanlinesEnabled)
             .toolbar {
                 Button {
                     isSettingsPresented = true
