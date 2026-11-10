@@ -8,10 +8,14 @@
 import CoreHaptics
 
 /// Plays Core Haptics patterns. Does nothing on hardware without haptics.
-public final class HapticEngine {
+///
+/// `@unchecked Sendable` because `CHHapticEngine` is not `Sendable`; `engine` is assigned once during
+/// initialization and never replaced.
+public final class HapticEngine: @unchecked Sendable {
+    public static let shared = HapticEngine()
     private var engine: CHHapticEngine?
 
-    public init() {
+    private init() {
         prepareEngine()
     }
 
@@ -30,23 +34,40 @@ public final class HapticEngine {
         }
     }
 
-    /// Plays the flex-pump haptic: a single strong transient tap.
+    /// A single strong tap.
     public func playFlexPump() {
-        guard let engine else { return }
-        let event = CHHapticEvent(
+        play([tap(intensity: 1.0, sharpness: 0.7, at: 0)])
+    }
+
+    /// A firm press followed by a softer release.
+    public func playBegin() {
+        play([
+            tap(intensity: 1.0, sharpness: 0.8, at: 0),
+            tap(intensity: 0.5, sharpness: 0.3, at: 0.09),
+        ])
+    }
+
+    private func tap(intensity: Float, sharpness: Float, at time: TimeInterval) -> CHHapticEvent {
+        CHHapticEvent(
             eventType: .hapticTransient,
             parameters: [
-                CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
-                CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.7),
+                CHHapticEventParameter(parameterID: .hapticIntensity, value: intensity),
+                CHHapticEventParameter(parameterID: .hapticSharpness, value: sharpness),
             ],
-            relativeTime: 0
+            relativeTime: time
         )
+    }
+
+    private func play(_ events: [CHHapticEvent]) {
+        guard let engine else { return }
         do {
-            let pattern = try CHHapticPattern(events: [event], parameters: [])
+            // The system stops the engine while the app is in the background.
+            try engine.start()
+            let pattern = try CHHapticPattern(events: events, parameters: [])
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: 0)
         } catch {
-            // Haptics are non-critical; never block or crash the boot sequence over a failure here.
+            // Haptics are non-critical; a failure must never block the app.
         }
     }
 }

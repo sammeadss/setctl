@@ -14,6 +14,7 @@ public struct HomeView: View {
     @State private var isSettingsPresented = false
     @Environment(AppModel.self) private var appModel
     @State private var hasUnfinishedWorkout = false
+    @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
 
     public init() {}
 
@@ -22,6 +23,9 @@ public struct HomeView: View {
             ZStack {
                 Palette.black.ignoresSafeArea()
                 Button {
+                    if isHapticsEnabled {
+                        HapticEngine.shared.playBegin()
+                    }
                     isSessionActive = true
                 } label: {
                     PowerSymbol()
