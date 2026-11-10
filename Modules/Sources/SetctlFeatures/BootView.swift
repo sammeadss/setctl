@@ -17,13 +17,14 @@ public struct BootView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
 
-    private let hapticEngine = HapticEngine()
+    private let hapticEngine = HapticEngine.shared
     let onFinished: () -> Void
 
     public init(onFinished: @escaping () -> Void) {
         self.onFinished = onFinished
-        // Build the frames before the first frame is drawn.
+        // Build the frames and start the haptic engine before the first frame is drawn.
         _ = Self.frames
+        _ = HapticEngine.shared
     }
 
     public var body: some View {
