@@ -18,8 +18,13 @@ import UIKit
 struct SetctlApp: App {
     @State private var appModel: AppModel
     @State private var hasBooted = false
+    @State private var selectedTab = Tab.home
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
+
+    private enum Tab {
+        case settings, home, history
+    }
 
     private let diagnostics = DiagnosticsCollector.startStandard()
 
@@ -39,16 +44,24 @@ struct SetctlApp: App {
         WindowGroup {
             // Reduce Motion skips the boot animation.
             if hasBooted || reduceMotion {
-                TabView {
+                TabView(selection: $selectedTab) {
+                    SettingsView()
+                        .tabItem {
+                            Label("Settings", systemImage: "gear")
+                        }
+                        .tag(Tab.settings)
+
                     HomeView()
                         .tabItem {
                             Label("Home", systemImage: "house")
                         }
+                        .tag(Tab.home)
 
                     HistoryView()
                         .tabItem {
                             Label("History", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90")
                         }
+                        .tag(Tab.history)
                 }
                 .tint(Palette.green)
                 .environment(appModel)
