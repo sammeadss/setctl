@@ -64,9 +64,6 @@ public struct AuthView: View {
             }
             .padding(Spacing.lg)
         }
-        .onAppear {
-            isFieldFocused = true
-        }
         .onChange(of: step) {
             isFieldFocused = true
         }
