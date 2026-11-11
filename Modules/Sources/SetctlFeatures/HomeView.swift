@@ -11,7 +11,6 @@ import SwiftUI
 
 public struct HomeView: View {
     @State private var isSessionActive = false
-    @State private var isSettingsPresented = false
     @Environment(AppModel.self) private var appModel
     @State private var hasUnfinishedWorkout = false
     @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
@@ -62,15 +61,6 @@ public struct HomeView: View {
                 }
                 .accessibilityLabel(hasUnfinishedWorkout ? "Resume workout" : "Begin workout")
             }
-            .toolbar {
-                Button {
-                    isSettingsPresented = true
-                } label: {
-                    Image(systemName: "gear")
-                }
-                .foregroundStyle(Palette.green)
-                .accessibilityLabel("Settings")
-            }
             .onAppear {
                 // Re-checked on every appearance so RESUME shows after a session. This also closes stale unfinished
                 // workouts as a side effect.
@@ -78,9 +68,6 @@ public struct HomeView: View {
             }
             .navigationDestination(isPresented: $isSessionActive) {
                 ActiveSessionView()
-            }
-            .sheet(isPresented: $isSettingsPresented) {
-                SettingsView()
             }
         }
     }

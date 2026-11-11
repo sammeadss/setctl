@@ -11,9 +11,8 @@ import SetctlDesignSystem
 import StoreKit
 import SwiftUI
 
-struct SettingsView: View {
+public struct SettingsView: View {
     @Environment(AppModel.self) private var appModel
-    @Environment(\.dismiss) private var dismiss
     @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
     @State private var exportFile: ExportFile?
     @State private var exportFailed = false
@@ -26,41 +25,38 @@ struct SettingsView: View {
         case idle, deleting, failed, deleted
     }
 
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Palette.black.ignoresSafeArea()
+    public init() {}
 
-                ScrollView {
-                    VStack(spacing: Spacing.lg) {
-                        Text("SETTINGS")
-                            .font(Typography.title)
-                            .foregroundStyle(Palette.green)
+    public var body: some View {
+        ZStack {
+            Palette.black.ignoresSafeArea()
 
-                        unitsRow
+            ScrollView {
+                VStack(spacing: Spacing.lg) {
+                    Text("SETTINGS")
+                        .font(Typography.title)
+                        .foregroundStyle(Palette.green)
 
-                        hapticsRow
+                    unitsRow
 
-                        proSection
+                    hapticsRow
 
-                        syncSection
+                    proSection
 
-                        exportSection
+                    syncSection
 
-                        diagnosticsSection
+                    exportSection
 
-                        accountSection
-                    }
-                    .padding(Spacing.lg)
+                    diagnosticsSection
+
+                    accountSection
                 }
-                // Rebuilt when the unit changes, because the CSV carries converted weights.
-                .task(id: appModel.weightUnit) { prepareExport() }
-                .task { diagnosticsFiles = (try? DiagnosticsStore.standard().files()) ?? [] }
+                .padding(Spacing.lg)
             }
-            .toolbar {
-                Button("DONE") { dismiss() }
-                    .foregroundStyle(Palette.green)
-            }
+            .scrollDismissesKeyboard(.interactively)
+            // Rebuilt when the unit changes, because the CSV carries converted weights.
+            .task(id: appModel.weightUnit) { prepareExport() }
+            .task { diagnosticsFiles = (try? DiagnosticsStore.standard().files()) ?? [] }
         }
         #if os(iOS)
         .manageSubscriptionsSheet(isPresented: $isManagingSubscription)
