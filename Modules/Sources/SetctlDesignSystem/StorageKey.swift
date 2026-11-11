@@ -8,5 +8,4 @@
 /// `UserDefaults` keys for the display and haptics settings. Renaming a value resets users' saved settings.
 public enum StorageKey {
     public static let hapticsEnabled = "hapticsEnabled"
-    public static let highContrastEnabled = "highContrastEnabled"
 }
