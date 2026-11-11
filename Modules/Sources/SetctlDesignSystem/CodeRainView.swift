@@ -99,17 +99,3 @@ private final class RainSimulation {
     CodeRainView(opacity: 0.6)
         .background(Palette.black)
 }
-
-#Preview("Inside the symbol") {
-    ZStack {
-        PowerSymbol()
-            .fill(Palette.green.opacity(0.2))
-        CodeRainView(cellSize: 9, speed: 2, density: 5)
-            .mask { PowerSymbol() }
-            .shadow(color: Palette.green.opacity(0.6), radius: 6)
-    }
-    .frame(width: 240, height: 240)
-    .padding(Spacing.lg)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Palette.black)
-}
