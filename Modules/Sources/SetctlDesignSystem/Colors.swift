@@ -23,20 +23,12 @@ public enum Palette {
     public static let black = Color(hex: 0x000000)
     public static let green = Color(hex: 0x00FF66)
 
-    /// Secondary text; steps brighter when high contrast is on.
-    public static var greenDim: Color {
-        isHighContrastEnabled ? Color(hex: 0x8FE6AD) : Color(hex: 0x4F9E6A)
-    }
+    /// Secondary text.
+    public static let greenDim = Color(hex: 0x4F9E6A)
 
-    /// Hairlines, borders, and disabled states; steps brighter when high contrast is on.
-    public static var greenFaint: Color {
-        isHighContrastEnabled ? Color(hex: 0x4F9E6A) : Color(hex: 0x1E4D33)
-    }
+    /// Hairlines, borders, and disabled states.
+    public static let greenFaint = Color(hex: 0x1E4D33)
 
     public static let amber = Color(hex: 0xFFB000)
     public static let red = Color(hex: 0xFF5C5C)
-
-    private static var isHighContrastEnabled: Bool {
-        UserDefaults.standard.bool(forKey: StorageKey.highContrastEnabled)
-    }
 }

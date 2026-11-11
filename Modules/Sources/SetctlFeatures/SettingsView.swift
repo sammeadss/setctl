@@ -15,7 +15,6 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(\.dismiss) private var dismiss
     @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
-    @AppStorage(StorageKey.highContrastEnabled) private var isHighContrastEnabled = false
     @State private var exportFile: ExportFile?
     @State private var exportFailed = false
     @State private var deletion = Deletion.idle
@@ -41,8 +40,6 @@ struct SettingsView: View {
                         unitsRow
 
                         hapticsRow
-
-                        highContrastRow
 
                         proSection
 
@@ -93,13 +90,6 @@ struct SettingsView: View {
 
     private var hapticsRow: some View {
         Toggle("HAPTICS", isOn: $isHapticsEnabled)
-            .font(Typography.label)
-            .foregroundStyle(Palette.greenDim)
-            .tint(Palette.green)
-    }
-
-    private var highContrastRow: some View {
-        Toggle("HIGH CONTRAST", isOn: $isHighContrastEnabled)
             .font(Typography.label)
             .foregroundStyle(Palette.greenDim)
             .tint(Palette.green)
