@@ -34,11 +34,6 @@ public final class HapticEngine: @unchecked Sendable {
         }
     }
 
-    /// A single strong tap.
-    public func playFlexPump() {
-        play([tap(intensity: 1.0, sharpness: 0.7, at: 0)])
-    }
-
     /// A firm press followed by a softer release.
     public func playBegin() {
         play([

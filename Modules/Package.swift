@@ -37,8 +37,7 @@ let package = Package(
         // Feature layer
         .target(
             name: "SetctlFeatures",
-            dependencies: ["SetctlData", "SetctlCore", "SetctlDesignSystem"],
-            resources: [.copy("Resources/frames.json"), .copy("Resources/setctl_resolve.txt")]
+            dependencies: ["SetctlData", "SetctlCore", "SetctlDesignSystem"]
         ),
 
         // One test target per module

@@ -69,6 +69,7 @@ public struct HomeView: View {
             .navigationDestination(isPresented: $isSessionActive) {
                 ActiveSessionView()
             }
+            .task(priority: .utility) { _ = HapticEngine.shared }
         }
     }
 }
