@@ -19,7 +19,6 @@ struct ActiveSessionView: View {
     #if os(iOS)
         @State private var editMode: EditMode = .inactive
     #endif
-    @AppStorage(StorageKey.scanlinesEnabled) private var isScanlinesEnabled = true
 
     var body: some View {
         ZStack {
@@ -31,13 +30,11 @@ struct ActiveSessionView: View {
                         .font(Typography.title)
                         .foregroundStyle(Palette.green)
                         .padding(.top, Spacing.md)
-                        .scanlines(isEnabled: isScanlinesEnabled)
 
                     TimelineView(.periodic(from: model.workout.startedAt, by: 1)) { context in
                         Text(formattedElapsed(from: model.workout.startedAt, to: context.date))
                             .font(Typography.label)
                             .foregroundStyle(Palette.greenDim)
-                            .scanlines(isEnabled: isScanlinesEnabled)
                     }
 
                     if model.saveFailed {
