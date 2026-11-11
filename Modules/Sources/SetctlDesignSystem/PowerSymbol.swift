@@ -9,11 +9,16 @@ import SwiftUI
 
 /// The power symbol: a ring open at the top with a vertical bar.
 public struct PowerSymbol: Shape {
-    public init() {}
+    /// Stroke thickness as a fraction of the shape's size; the icon uses the default.
+    private let weight: Double
+
+    public init(weight: Double = 0.09) {
+        self.weight = weight
+    }
 
     public func path(in rect: CGRect) -> Path {
         let side = min(rect.width, rect.height)
-        let stroke = 0.09 * side
+        let stroke = weight * side
 
         // Angles run from 3 o'clock with y pointing down, so straight up is -90 degrees and the opening spans
         // 38 degrees to each side of it.

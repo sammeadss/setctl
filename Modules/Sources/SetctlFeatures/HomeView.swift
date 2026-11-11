@@ -16,32 +16,50 @@ public struct HomeView: View {
     @State private var hasUnfinishedWorkout = false
     @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
 
+    private var syncLight: (mode: StatusLight.Mode, color: Color) {
+        switch appModel.syncStatus {
+        case .syncing: (.blinking, Palette.amber)
+        case .synced: (.on, Palette.green)
+        case .failed: (.on, Palette.amber)
+        case .wrongAccount: (.on, Palette.red)
+        case .off, .idle: (.off, Palette.red)
+        }
+    }
+
     public init() {}
 
     public var body: some View {
         NavigationStack {
             ZStack {
                 Palette.black.ignoresSafeArea()
+                CodeRainView(opacity: 0.25)
+                    .ignoresSafeArea()
                 Button {
                     if isHapticsEnabled {
                         HapticEngine.shared.playBegin()
                     }
                     isSessionActive = true
                 } label: {
-                    PowerSymbol()
-                        .fill(Palette.green)
-                        .frame(width: 160, height: 160)
-                        .overlay(alignment: .bottom) {
-                            if hasUnfinishedWorkout {
-                                Text("WORKOUT IN PROGRESS")
-                                    .font(Typography.label)
-                                    .foregroundStyle(Palette.greenDim)
-                                    .fixedSize()
-                                    .offset(y: Spacing.xl)
-                            }
-                        }
+                    ZStack {
+                        Circle()
+                            .fill(Palette.black)
+                            .padding(7)
+                        PowerSymbol(weight: 0.05)
+                            .fill(Palette.green)
+                    }
+                    .frame(width: 176, height: 176)
+                    .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
+                .overlay(alignment: .trailing) {
+                    VStack(spacing: Spacing.sm) {
+                        StatusLight(mode: hasUnfinishedWorkout ? .on : .off, color: Palette.amber)
+                        StatusLight(mode: syncLight.mode, color: syncLight.color)
+                    }
+                    .padding(Spacing.xs)
+                    .background(Palette.black, in: Capsule())
+                    .offset(x: Spacing.xl)
+                }
                 .accessibilityLabel(hasUnfinishedWorkout ? "Resume workout" : "Begin workout")
             }
             .toolbar {
