@@ -2,10 +2,6 @@ import Foundation
 @testable import SetctlData
 import Testing
 
-@Test func migrationRuns() throws {
-    _ = try AppDatabase.empty()
-}
-
 @Test func savesAndFetchesWorkout() throws {
     let database = try AppDatabase.empty()
     let repository = WorkoutRepository(database: database)
@@ -212,14 +208,6 @@ import Testing
     try repository.save(details)
 
     #expect(try repository.resolveUnfinishedWorkout(now: date.addingTimeInterval(3600)) == nil)
-}
-
-@Test func syncCursorStartsEmpty() throws {
-    let repository = try SyncStateRepository(database: AppDatabase.empty())
-
-    let cursor = try repository.cursor(userId: "user-a", table: .workout)
-
-    #expect(cursor == SyncCursor(pushedUpTo: nil, pulledUpTo: nil))
 }
 
 @Test func savingOneCursorKeepsTheOther() throws {

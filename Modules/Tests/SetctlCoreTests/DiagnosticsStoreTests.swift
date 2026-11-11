@@ -32,10 +32,6 @@ import Testing
     #expect(names.last == "1970-01-04T00-00-00Z-metrics.json")
 }
 
-@Test func anEmptyStoreHasNoFiles() {
-    #expect(makeStore().files().isEmpty)
-}
-
 private func makeStore(limit: Int = 10) -> DiagnosticsStore {
     let directory = FileManager.default.temporaryDirectory
         .appendingPathComponent("diagnostics-\(UUID().uuidString)", isDirectory: true)

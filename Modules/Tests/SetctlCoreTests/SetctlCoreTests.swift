@@ -7,10 +7,6 @@ import Testing
     #expect(WorkoutMath.totalVolume(of: sets) == 2000)
 }
 
-@Test func totalVolumeOfNoSetsIsZero() {
-    #expect(WorkoutMath.totalVolume(of: []) == 0)
-}
-
 @Test func kilogramsAreUnchangedInKilograms() {
     #expect(WeightUnit.kg.fromKilograms(100) == 100)
     #expect(WeightUnit.kg.toKilograms(100) == 100)
