@@ -21,7 +21,7 @@ let package = Package(
     ],
     targets: [
         // Leaf modules
-        .target(name: "SetctlDesignSystem", resources: [.process("Scanlines.metal"), .process("Bloom.metal")]),
+        .target(name: "SetctlDesignSystem", resources: [.process("Bloom.metal")]),
 
         .target(name: "SetctlCore"),
         .target(
