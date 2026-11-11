@@ -14,10 +14,8 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(StorageKey.scanlinesEnabled) private var isScanLinesEnabled = true
     @AppStorage(StorageKey.hapticsEnabled) private var isHapticsEnabled = true
     @AppStorage(StorageKey.highContrastEnabled) private var isHighContrastEnabled = false
-    @AppStorage(StorageKey.scanlineMotionEnabled) private var isScanlineMotionEnabled = false
     @State private var exportFile: ExportFile?
     @State private var exportFailed = false
     @State private var deletion = Deletion.idle
@@ -41,10 +39,6 @@ struct SettingsView: View {
                             .foregroundStyle(Palette.green)
 
                         unitsRow
-
-                        scanlinesRow
-
-                        scanlineMotionRow
 
                         hapticsRow
 
@@ -95,20 +89,6 @@ struct SettingsView: View {
             }
             .pickerStyle(.segmented)
         }
-    }
-
-    private var scanlinesRow: some View {
-        Toggle("SCANLINES", isOn: $isScanLinesEnabled)
-            .font(Typography.label)
-            .foregroundStyle(Palette.greenDim)
-            .tint(Palette.green)
-    }
-
-    private var scanlineMotionRow: some View {
-        Toggle("SCANLINE MOTION", isOn: $isScanlineMotionEnabled)
-            .font(Typography.label)
-            .foregroundStyle(Palette.greenDim)
-            .tint(Palette.green)
     }
 
     private var hapticsRow: some View {
